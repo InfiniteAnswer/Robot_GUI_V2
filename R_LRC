@@ -1,0 +1,30 @@
+modbusBytes = []
+singleByte = ""
+while singleByte != "xx":
+    modbusBytes = []
+    while singleByte != "x":
+        singleByte=input('Enter byte: ')
+        print(singleByte)
+        modbusBytes.append(singleByte)
+        print(modbusBytes)
+
+    del modbusBytes[-1]
+
+    running_total = 0
+    for i, itm in enumerate(modbusBytes):
+        modbusBytes[i] = '0x'+itm
+        running_total += eval(modbusBytes[i])
+
+
+    print(modbusBytes)
+
+    last8bits = '0b'+format(running_total,'08b')[-8:]
+    lrc = eval(bin(eval(last8bits)-(1<<8))[1:])
+    print(lrc)
+    print(hex(lrc))
+
+    hex_string = format(lrc, '0x').upper()
+    print(hex_string)
+    print(hex(ord(hex_string[0])), ', ', hex(ord(hex_string[1])))
+    singleByte = ''
+
