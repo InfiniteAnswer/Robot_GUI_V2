@@ -1,3 +1,6 @@
+# Author 
+# Version
+
 import tkinter as tk
 import tkinter.ttk as ttk
 from time import sleep
