@@ -9,8 +9,9 @@ import Manual
 import Settings
 
 class Controls():
-    def __init__(self, background):
+    def __init__(self, background, info_manual):
         self.background=background
+        self.info_manual = info_manual
         self.manual_state = tk.BooleanVar()
         self.manual_state.set(0)
         self.print_state = tk.BooleanVar()
@@ -68,6 +69,8 @@ class Controls():
             self.initialise_state.set(0)
             self.print_state.set(0)
             self.settings_state.set(0)
+            self.info_manual.place(x=130, y=135)
+            self.info_manual.lift(aboveThis=None)
         else:
             self.manual_state.set(0)
 
