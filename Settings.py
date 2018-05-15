@@ -17,8 +17,13 @@ button_width = 30
 
 class Settings():
     def __init__(self, parent):
-        self.dummyframe = tk.Frame(parent, bg="grey10", width=480, height=315)
-        self.dummyframe.place(x=130, y=135)
+        background_image = Image.open("C:\\Users\\Victor\\Documents\\Images\\grey10_480x315.jpg")
+        self.background_image_tk = ImageTk.PhotoImage(background_image)
+        self.info_settings = tk.Label(parent, image=self.background_image_tk, width=480, height=315)
+        self.info_settings.place(x=130, y=135)
+
+        self.dummyframe = tk.Frame(self.info_settings, bg="grey10", width=480, height=315)
+        self.dummyframe.place(x=0, y=0)
 
         self.vscrollbar = tk.Scrollbar(self.dummyframe, orient=tk.VERTICAL, troughcolor="red")
         self.vscrollbar.grid(row=0, column=1, sticky=tk.N + tk.S)

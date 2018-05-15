@@ -17,40 +17,45 @@ button_width = 30
 
 class Initialise():
     def __init__(self, parent):
-        self.banner = tk.Label(parent, text="Initialisation Control",
+        background_image=Image.open("C:\\Users\\Victor\\Documents\\Images\\grey10_480x315.jpg")
+        self.background_image_tk = ImageTk.PhotoImage(background_image)
+        self.info_initialise = tk.Label(parent, image=self.background_image_tk, width=480, height=315)
+        self.info_initialise.place(x=130, y=135)
+
+        self.banner = tk.Label(self.info_initialise, text="Initialisation Control",
                                bg=background_clr, fg=foreground_clr_banner)
         self.banner.place(x=0, y=0)
 
-        self.button_rehome_TT = tk.Button(parent, text="Rehome TT",
+        self.button_rehome_TT = tk.Button(self.info_initialise, text="Rehome TT",
                                           bg=background_clr, fg=foreground_clr_off,
                                           activebackground=foreground_clr_on,
                                           font=button_font,
                                           width=button_width)
-        self.button_rehome_TT.place(x=20, y=20)
+        self.button_rehome_TT.place(x=40, y=20)
 
-        self.button_rehome_PAL = tk.Button(parent, text="Rehome PAL",
+        self.button_rehome_PAL = tk.Button(self.info_initialise, text="Rehome PAL",
                                            bg=background_clr, fg=foreground_clr_off,
                                            activebackground=foreground_clr_on,
                                            font=button_font,
                                            width=button_width)
-        self.button_rehome_PAL.place(x=20, y=70)
+        self.button_rehome_PAL.place(x=40, y=70)
 
-        self.button_Mag2PAL_near = tk.Button(parent, text="Move Chute to Gripper",
+        self.button_Mag2PAL_near = tk.Button(self.info_initialise, text="Move Chute to Gripper",
                                              bg=background_clr, fg=foreground_clr,
                                              activebackground=foreground_clr_on,
                                              font=button_font,
                                              width=button_width)
-        self.button_Mag2PAL_near.place(x=20, y=120)
+        self.button_Mag2PAL_near.place(x=40, y=120)
 
-        self.button_Mag2PAL_far = tk.Button(parent, text="Move Chute to Magazine",
+        self.button_Mag2PAL_far = tk.Button(self.info_initialise, text="Move Chute to Magazine",
                                             bg=background_clr, fg=foreground_clr,
                                             activebackground=foreground_clr_on,
                                             font=button_font,
                                             width=button_width)
-        self.button_Mag2PAL_far.place(x=20, y=170)
+        self.button_Mag2PAL_far.place(x=40, y=170)
 
-        self.mapping_frame = tk.Frame(parent, width=400, height=80, bg=background_clr, bd=2, relief=tk.RAISED)
-        self.mapping_frame.place(x=20, y=220)
+        self.mapping_frame = tk.Frame(self.info_initialise, width=400, height=80, bg=background_clr, bd=2, relief=tk.RAISED)
+        self.mapping_frame.place(x=40, y=220)
         self.cartridge_label = tk.Label(self.mapping_frame, text="Cartridge Mapping",
                                         bg=background_clr, fg=foreground_clr)
         self.cartridge_label.place(x=20, y=20)
