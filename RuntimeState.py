@@ -10,3 +10,4 @@ class RuntimeState():
         self.paletteinitialised = False
         self.fileloaded = False
         self.printpause =False
+        self.axismoving = False

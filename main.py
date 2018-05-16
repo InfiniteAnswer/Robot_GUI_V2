@@ -17,7 +17,7 @@ import RuntimeState
 
 root = tk.Tk()
 root.withdraw()
-state = RuntmeState.RuntimeState()
+state = RuntimeState.RuntimeState()
 
 # Setup main window
 background = tk.Toplevel(root, background='black', width=640, height=480)
