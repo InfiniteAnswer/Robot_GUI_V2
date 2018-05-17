@@ -1,13 +1,61 @@
 class RuntimeState():
     def __init__(self):
-        # Define control flags
         self.homeax1 = False
         self.homeax2 = False
         self.homeax3 = False
         self.homeax4 = False
         self.printing =False
+        self.abort = False
         self.magazineinitialised = False
         self.paletteinitialised = False
         self.fileloaded = False
         self.printpause =False
         self.axismoving = False
+        self.process_log = ""
+
+        self.param_robo = {"tt_port": "COM4",
+                      "pal_port": "COM3",
+                      "cntrl_port": "COM5",
+                      "tt_baud": 9600,
+                      "pal_baud": 38400,
+                      "cntrl_baud": 38400,
+                      "tt_timeout": 1,
+                      "pal_timeout": 1,
+                      "cntrl_timeout": 1,
+                      "gripper_open_wait": 0.25,
+                      "gripper_close_wait": 0.4,
+                      "gripper_up": 30,
+                      "gripper_down_palette": 39.75,
+                      "gripper_down_table": 73.5,
+                      "moving_timeout": 90}
+
+        self.param_tiles = {"tile_width": 20,
+                            "tile_height": 20,
+                            "inter_tile_hgap": 3,
+                            "inter_tile_vgap": 3,
+                            "palette_pitch": 30.48,
+                            "tt_origin_x": 15,
+                            "tt_origin_y": 15,
+                            "pal_origin_x": 45.5}
+
+        self.pal_message = {"palHome": ":01060D001010CC\r\n",
+                            "palSet_position_1": ":01060D030001E8\r\n",
+                            "palSet_position_2": ":01060D030002E7\r\n",
+                            "palCSTR_off": ":01060D001000DC\r\n",
+                            "palCSTR_on": ":01060D001008D4\r\n",
+                            "palQuery_moving": ":01039007000164\r\n",
+                            "palQuery_home": ":01039005000166\r\n",
+                            "enableModbus": ":01050427FF00D0\r\n"}
+
+        self.ttPort = serial.Serial(port=self.param_robo["tt_port"],
+                               baudrate=self.param_robo["tt_baud"],
+                               timeout=self.param_robo["tt_timeout"])
+        self.palPort = serial.Serial(port=self.param_robo["pal_port"],
+                                baudrate=self.param_robo["pal_baud"],
+                                timeout=self.param_robo["pal_timeout"])
+        self.cntrlPort = serial.Serial(port=self.param_robo["cntrl_port"],
+                                baudrate=self.param_robo["cntrl_baud"],
+                                timeout=self.param_robo["cntrl_timeout"])
+
+
+

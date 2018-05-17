@@ -1,19 +1,3 @@
-# Author
-# Version
-
-import tkinter as tk
-import tkinter.ttk as ttk
-from time import sleep
-from PIL import ImageTk, Image
-import sys
-
-import Initialise
-import Manual
-import Settings
-import TilePrint
-import Controls
-import RuntimeState
-
 from random import randint
 import serial               # used for serial communications. came from <pip3.6 install pyserial>
 import RR_CommandGenerator     # class developed to generate a limited number of TT robot commands
@@ -25,6 +9,40 @@ POLLING_DELAY = 0.1         # time in SECONDS between repeated requests to see i
 process_log = ""
 mosaic_number = 0
 LOG_file_save_location = "C:/Users/Finlay/Documents/iai_log_files/"
+
+param_tiles = {"tile_width": 20,
+               "tile_height": 20,
+               "inter_tile_hgap": 3,
+               "inter_tile_vgap": 3,
+               "palette_pitch": 30.48,
+               "tt_origin_x": 15,
+               "tt_origin_y": 15,
+               "pal_origin_x": 45.5}
+
+param_robo = {"tt_port": "COM4",
+              "pal_port": "COM3",
+              "cntrl_port": "COM5",
+              "tt_baud": 9600,
+              "pal_baud": 38400,
+              "cntrl_baud": 38400,
+              "tt_timeout": 1,
+              "pal_timeout": 1,
+              "cntrl_timeout": 1,
+              "gripper_open_wait": 0.25,
+              "gripper_close_wait": 0.4,
+              "gripper_up": 30,
+              "gripper_down_palette":39.75,
+              "gripper_down_table": 73.5,
+              "moving_timeout": 90}
+
+pal_message = {"palHome": ":01060D001010CC\r\n",
+               "palSet_position_1": ":01060D030001E8\r\n",
+               "palSet_position_2": ":01060D030002E7\r\n",
+               "palCSTR_off": ":01060D001000DC\r\n",
+               "palCSTR_on": ":01060D001008D4\r\n",
+               "palQuery_moving": ":01039007000164\r\n",
+               "palQuery_home": ":01039005000166\r\n",
+               "enableModbus": ":01050427FF00D0\r\n"}
 
 
 def readImage():
@@ -68,6 +86,20 @@ def readImage():
     # filename = "C:\\Users\\Victor\\Desktop\list_save.pkl"
     # image = pickle.load(open(filename, "rb"))
     return image
+
+
+def open_ports():
+    # global port_tt port_pal
+    ttPort = serial.Serial(port=param_robo["tt_port"],
+                           baudrate=param_robo["tt_baud"],
+                           timeout=param_robo["tt_timeout"])
+    palPort = serial.Serial(port=param_robo["pal_port"],
+                            baudrate=param_robo["pal_baud"],
+                            timeout=param_robo["pal_timeout"])
+    cntrlPort = serial.Serial(port=param_robo["cntrl_port"],
+                            baudrate=param_robo["cntrl_baud"],
+                            timeout=param_robo["cntrl_timeout"])
+    return (ttPort, palPort, cntrlPort)
 
 
 def tt_moving_query(ttPort):
@@ -490,66 +522,30 @@ def sequence(ttPort, palPort, cntrlPort, image):
             print(process_log.split("\n")[-2] + "\n")
 
 
-# # initialise robots
-# ttPort, palPort, cntrlPort = initialise()
-# image = readImage()
-#
-# # run sequence
-# sequence(ttPort, palPort, cntrlPort, image)
-#
-# # close serial port
-# ttPort.close()
-# palPort.close()
-# cntrlPort.close()
-#
-# # save log file
-# process_log += timestamped_msg("saving log file\n")
-# process_log += timestamped_msg("PROGRAM END")
-# LOG_filename = LOG_file_save_location + "Sequence for mosaic_" + str(mosaic_number) + "_" + timestamped_msg("")[:-1]  + ".txt"
-# LOG_filename = LOG_filename[2:].replace(":", "_")
-# LOG_filename = "C:" + LOG_filename.replace(" ", "_")
-# file = open(LOG_filename, "w")
-# print("saving log file: ", LOG_filename)
-# file.write(process_log)
-# file.close()
-# print("log file saved\n\nPROGRAM END")
-# exit()
-#
-# # read in the file with the mosaic tile image information
-# # read in the file with the mosaic tile configuration information
+# initialise robots
+ttPort, palPort, cntrlPort = initialise()
+image = readImage()
 
+# run sequence
+sequence(ttPort, palPort, cntrlPort, image)
 
+# close serial port
+ttPort.close()
+palPort.close()
+cntrlPort.close()
 
+# save log file
+process_log += timestamped_msg("saving log file\n")
+process_log += timestamped_msg("PROGRAM END")
+LOG_filename = LOG_file_save_location + "Sequence for mosaic_" + str(mosaic_number) + "_" + timestamped_msg("")[:-1]  + ".txt"
+LOG_filename = LOG_filename[2:].replace(":", "_")
+LOG_filename = "C:" + LOG_filename.replace(" ", "_")
+file = open(LOG_filename, "w")
+print("saving log file: ", LOG_filename)
+file.write(process_log)
+file.close()
+print("log file saved\n\nPROGRAM END")
+exit()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-root = tk.Tk()
-root.withdraw()
-state = RuntimeState.RuntimeState()
-
-# Setup main window
-background = tk.Toplevel(root, background='black', width=640, height=480)
-background.title("PxlRT Studio")
-background.geometry("640x480")
-
-# Create 4 windows that can be displayed in the info panel
-initialise_panel = Initialise.Initialise(background, state)
-manual_panel = Manual.Manual(background, state)
-settings_panel = Settings.Settings(background, state)
-tileprint_panel = TilePrint.TilePrint(background, state)
-
-# Create main controls
-controls = Controls.Controls(background, initialise_panel, manual_panel, settings_panel, tileprint_panel, state)
-
-root.mainloop()
+# read in the file with the mosaic tile image information
+# read in the file with the mosaic tile configuration information

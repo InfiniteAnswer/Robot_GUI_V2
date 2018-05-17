@@ -3,6 +3,7 @@ import tkinter.ttk as ttk
 from time import sleep
 from PIL import ImageTk, Image
 import sys
+import RR_CommandGenerator
 
 background_clr = "grey10"
 foreground_clr = "yellow"
@@ -27,15 +28,21 @@ class Initialise():
                                bg=background_clr, fg=foreground_clr_banner)
         self.banner.place(x=0, y=0)
 
+        self.rehome_TT_button_state = state.homeax1 and state.homeax2 and state.homeax3
+        self.rehome_TT_button_bkclr = "green" if self.rehome_TT_button_state else "red"
+        self.rehome_TT_button_fgclr = "white"
         self.button_rehome_TT = tk.Button(self.info_initialise, text="Rehome TT",
-                                          bg=background_clr, fg=foreground_clr_off,
+                                          bg=self.rehome_TT_button_bkclr, fg=self.rehome_TT_button_fgclr,
                                           activebackground=foreground_clr_on,
                                           font=button_font,
                                           width=button_width)
         self.button_rehome_TT.place(x=40, y=20)
 
+        self.rehome_PAL_button_state = state.homeax4
+        self.rehome_PAL_button_bkclr = "green" if self.rehome_PAL_button_state else "red"
+        self.rehome_PAL_button_fgclr = "white"
         self.button_rehome_PAL = tk.Button(self.info_initialise, text="Rehome PAL",
-                                           bg=background_clr, fg=foreground_clr_off,
+                                           bg=self.rehome_PAL_button_bkclr, fg=self.rehome_PAL_button_fgclr,
                                            activebackground=foreground_clr_on,
                                            font=button_font,
                                            width=button_width)
@@ -69,3 +76,58 @@ class Initialise():
             self.cartridge_label_mapping_entry.append(tk.Entry(self.mapping_frame, width=1, font=mapping_font))
             self.cartridge_label_mapping[i].place(x=140 + i * 30, y=0)
             self.cartridge_label_mapping_entry[i].place(x=140 + i * 30, y=33)
+
+
+    def rehome_TT_callback(self):
+        # check if axes of tt are homed
+        cmd = RR_CommandGenerator.ttMovingQuery(axis="001")
+        state.ttPort.write(cmd)
+        response_tt_1 = state.ttPort.readline()
+        cmd = RR_CommandGenerator.ttMovingQuery(axis="010")
+        state.ttPort.write(cmd)
+        response_tt_2 = state.ttPort.readline()
+        cmd = RR_CommandGenerator.ttMovingQuery(axis="100")
+        state.ttPort.write(cmd)
+        response_tt_3 = state.ttPort.readline()
+
+        # if not, home z axis of tt first for SAFETY reasons
+        response_tt_1 = '0x' + str(response_tt_1)[11]
+        response_tt_2 = '0x' + str(response_tt_2)[11]
+        response_tt_3 = '0x' + str(response_tt_3)[11]
+
+        tt_1_home_complete = ((eval(response_tt_1) & 0b0100) == 4)
+        tt_2_home_complete = ((eval(response_tt_2) & 0b0100) == 4)
+        tt_3_home_complete = ((eval(response_tt_3) & 0b0100) == 4)
+
+        if not (tt_3_home_complete):
+            process_log += timestamped_msg("executing TT home for z-axis...\n")
+            print(process_log.split("\n")[-2])
+            state.ttPort.write(RR_CommandGenerator.ttHome(axis="100"))
+            unused_response = state.ttPort.readline()
+            # moving?
+            tt_pal_moving(state.ttPort, state.palPort)
+        else:
+            process_log += timestamped_msg("TT z-axis already homed, no need to repeat\n")
+            print(process_log.split("\n")[-2])
+
+        if not (tt_2_home_complete):
+            process_log += timestamped_msg("executing TT home for y-axis...\n")
+            print(process_log.split("\n")[-2])
+            state.ttPort.write(RR_CommandGenerator.ttHome(axis="010"))
+            unused_response = state.ttPort.readline()
+            # moving?
+            tt_pal_moving(state.ttPort, state.palPort)
+        else:
+            process_log += timestamped_msg("TT y-axis already homed, no need to repeat\n")
+            print(process_log.split("\n")[-2])
+
+        if not (tt_1_home_complete):
+            process_log += timestamped_msg("executing TT home for x-axis...\n")
+            print(process_log.split("\n")[-2])
+            state.ttPort.write(RR_CommandGenerator.ttHome(axis="001"))
+            unused_response = state.ttPort.readline()
+            # moving?
+            tt_pal_moving(state.ttPort, state.palPort)
+        else:
+            process_log += timestamped_msg("TT x-axis already homed, no need to repeat\n")
+            print(process_log.split("\n")[-2])
