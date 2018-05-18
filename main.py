@@ -70,29 +70,6 @@ def readImage():
     return image
 
 
-def tt_moving_query(ttPort):
-    # ask tt if moving and save response
-    cmd = RR_CommandGenerator.ttMovingQuery(axis="001")
-    ttPort.write(cmd)
-    response_tt_1 = ttPort.readline()
-    cmd = RR_CommandGenerator.ttMovingQuery(axis="010")
-    ttPort.write(cmd)
-    response_tt_2 = ttPort.readline()
-    cmd = RR_CommandGenerator.ttMovingQuery(axis="100")
-    ttPort.write(cmd)
-    response_tt_3 = ttPort.readline()
-
-    # perform logical tests on 3 responses and generate 3 true/false answers
-    response_tt_1 = '0x' + str(response_tt_1)[10:12]
-    response_tt_2 = '0x' + str(response_tt_2)[10:12]
-    response_tt_3 = '0x' + str(response_tt_3)[10:12]
-    tt_1 = (eval(response_tt_1) & 0b1) == 1
-    tt_2 = (eval(response_tt_2) & 0b1) == 1
-    tt_3 = (eval(response_tt_3) & 0b1) == 1
-    tt = tt_1 or tt_2 or tt_3
-    return (tt)
-
-
 def pal_moving_query(palPort):
     # ask pal if moving and save response
     cmd = pal_message["palQuery_moving"].encode("ascii")
