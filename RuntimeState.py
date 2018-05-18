@@ -1,3 +1,5 @@
+import RR_CommandGenerator
+
 class RuntimeState():
     def __init__(self):
         self.homeax1 = False
@@ -58,4 +60,50 @@ class RuntimeState():
                                 timeout=self.param_robo["cntrl_timeout"])
 
 
+    def tt_moving_query(self):
+        # ask tt if moving and save response
+        cmd = RR_CommandGenerator.ttMovingQuery(axis="001")
+        self.ttPort.write(cmd)
+        response_tt_1 = self.ttPort.readline()
+        cmd = RR_CommandGenerator.ttMovingQuery(axis="010")
+        self.ttPort.write(cmd)
+        response_tt_2 = self.ttPort.readline()
+        cmd = RR_CommandGenerator.ttMovingQuery(axis="100")
+        self.ttPort.write(cmd)
+        response_tt_3 = self.ttPort.readline()
+
+        # perform logical tests on 3 responses and generate 3 true/false answers
+        response_tt_1 = '0x' + str(response_tt_1)[10:12]
+        response_tt_2 = '0x' + str(response_tt_2)[10:12]
+        response_tt_3 = '0x' + str(response_tt_3)[10:12]
+        tt_1 = (eval(response_tt_1) & 0b1) == 1
+        tt_2 = (eval(response_tt_2) & 0b1) == 1
+        tt_3 = (eval(response_tt_3) & 0b1) == 1
+        tt = tt_1 or tt_2 or tt_3
+        return (tt)
+
+def pal_moving_query(palPort):
+    # ask pal if moving and save response
+    cmd = pal_message["palQuery_moving"].encode("ascii")
+    palPort.write(cmd)
+    response_pal = palPort.readline()
+
+    # perform logical test on response and generate true/false answers
+    response_pal = '0x' + str(response_pal)[11:12]
+    pal = (eval(response_pal) & 0b10) == 2
+    return (pal)
+
+
+def tt_moving(ttPort):
+    global process_log
+    timeout = time.time() + param_robo["moving_timeout"]
+    while (tt_moving_query(ttPort)):
+        if time.time() > timeout:
+            process_log += "WARNING! TT timed out. Unable to reach set-point after " +\
+                           str(param_robo["moving_timeout"]) + " seconds\n"
+            print(process_log.split("\n")[-2])
+            break
+        time.sleep(POLLING_DELAY)
+        
+        
 
