@@ -106,34 +106,34 @@ class Initialise():
         tt_3_home_complete = ((eval(response_tt_3) & 0b0100) == 4)
 
         if not (tt_3_home_complete):
-            process_log += timestamped_msg("executing TT home for z-axis...\n")
-            # print(process_log.split("\n")[-2])
+            state.process_log += timestamped_msg("executing TT home for z-axis...\n")
+            # print(state.process_log.split("\n")[-2])
             state.ttPort.write(RR_CommandGenerator.ttHome(axis="100"))
             unused_response = state.ttPort.readline()
             # moving?
             tt_pal_moving(state.ttPort, state.palPort)
         else:
-            process_log += timestamped_msg("TT z-axis already homed, no need to repeat\n")
-            print(process_log.split("\n")[-2])
+            state.process_log += timestamped_msg("TT z-axis already homed, no need to repeat\n")
+            # print(state.process_log.split("\n")[-2])
 
         if not (tt_2_home_complete):
-            process_log += timestamped_msg("executing TT home for y-axis...\n")
-            print(process_log.split("\n")[-2])
+            state.process_log += timestamped_msg("executing TT home for y-axis...\n")
+            # print(state.process_log.split("\n")[-2])
             state.ttPort.write(RR_CommandGenerator.ttHome(axis="010"))
             unused_response = state.ttPort.readline()
             # moving?
             tt_pal_moving(state.ttPort, state.palPort)
         else:
-            process_log += timestamped_msg("TT y-axis already homed, no need to repeat\n")
-            print(process_log.split("\n")[-2])
+            state.process_log += timestamped_msg("TT y-axis already homed, no need to repeat\n")
+            # print(state.process_log.split("\n")[-2])
 
         if not (tt_1_home_complete):
-            process_log += timestamped_msg("executing TT home for x-axis...\n")
-            print(process_log.split("\n")[-2])
+            state.process_log += timestamped_msg("executing TT home for x-axis...\n")
+            # print(state.process_log.split("\n")[-2])
             state.ttPort.write(RR_CommandGenerator.ttHome(axis="001"))
             unused_response = state.ttPort.readline()
             # moving?
             tt_pal_moving(state.ttPort, state.palPort)
         else:
-            process_log += timestamped_msg("TT x-axis already homed, no need to repeat\n")
-            print(process_log.split("\n")[-2])
+            state.process_log += timestamped_msg("TT x-axis already homed, no need to repeat\n")
+            # print(state.process_log.split("\n")[-2])

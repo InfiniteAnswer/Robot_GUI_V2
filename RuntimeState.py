@@ -1,4 +1,5 @@
 import RR_CommandGenerator
+import serial               # used for serial communications. came from <pip3.6 install pyserial>
 
 class RuntimeState():
     def __init__(self):
