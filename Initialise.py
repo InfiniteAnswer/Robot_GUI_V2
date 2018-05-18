@@ -27,7 +27,8 @@ class Initialise():
         self.banner = tk.Label(self.info_initialise, text="Initialisation Control",
                                bg=background_clr, fg=foreground_clr_banner)
         self.banner.place(x=0, y=0)
-
+        
+        # create and define REHOME_TT button
         self.rehome_TT_button_state = state.homeax1 and state.homeax2 and state.homeax3
         self.rehome_TT_button_bkclr = "green" if self.rehome_TT_button_state else "red"
         self.rehome_TT_button_fgclr = "white"
@@ -35,9 +36,11 @@ class Initialise():
                                           bg=self.rehome_TT_button_bkclr, fg=self.rehome_TT_button_fgclr,
                                           activebackground=foreground_clr_on,
                                           font=button_font,
-                                          width=button_width)
+                                          width=button_width,
+                                          command=rehome_TT_callback)
         self.button_rehome_TT.place(x=40, y=20)
 
+        # create and define REHOME_PAL button
         self.rehome_PAL_button_state = state.homeax4
         self.rehome_PAL_button_bkclr = "green" if self.rehome_PAL_button_state else "red"
         self.rehome_PAL_button_fgclr = "white"
@@ -48,6 +51,7 @@ class Initialise():
                                            width=button_width)
         self.button_rehome_PAL.place(x=40, y=70)
 
+        # create and define MAG2PAL_NEAR button
         self.button_Mag2PAL_near = tk.Button(self.info_initialise, text="Move Chute to Gripper",
                                              bg=background_clr, fg=foreground_clr,
                                              activebackground=foreground_clr_on,
@@ -55,6 +59,7 @@ class Initialise():
                                              width=button_width)
         self.button_Mag2PAL_near.place(x=40, y=120)
 
+        # create and define MAG2PAL_FAR button
         self.button_Mag2PAL_far = tk.Button(self.info_initialise, text="Move Chute to Magazine",
                                             bg=background_clr, fg=foreground_clr,
                                             activebackground=foreground_clr_on,
@@ -62,6 +67,7 @@ class Initialise():
                                             width=button_width)
         self.button_Mag2PAL_far.place(x=40, y=170)
 
+        # create 8 entries for 8 cartridge mappings
         self.mapping_frame = tk.Frame(self.info_initialise, width=400, height=80, bg=background_clr, bd=2, relief=tk.RAISED)
         self.mapping_frame.place(x=40, y=220)
         self.cartridge_label = tk.Label(self.mapping_frame, text="Cartridge Mapping",
@@ -101,7 +107,7 @@ class Initialise():
 
         if not (tt_3_home_complete):
             process_log += timestamped_msg("executing TT home for z-axis...\n")
-            print(process_log.split("\n")[-2])
+            # print(process_log.split("\n")[-2])
             state.ttPort.write(RR_CommandGenerator.ttHome(axis="100"))
             unused_response = state.ttPort.readline()
             # moving?
