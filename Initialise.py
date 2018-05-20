@@ -10,6 +10,10 @@ background_clr = "grey10"
 foreground_clr = "yellow"
 foreground_clr_off = "red"
 foreground_clr_on = "green"
+active_bg_clr = "green"
+active_fg_clr = "black"
+inactive_bg_clr = background_clr
+inactive_fg_clr = foreground_clr
 foreground_clr_banner = "grey50"
 # button_font = ("Arial", 18)
 button_font = "Arial 16 bold"
@@ -35,7 +39,7 @@ class Initialise():
         self.rehome_TT_button_fgclr = "white"
         self.button_rehome_TT = tk.Button(self.info_initialise, text="Rehome TT",
                                           bg=self.rehome_TT_button_bkclr, fg=self.rehome_TT_button_fgclr,
-                                          activebackground=foreground_clr_on,
+                                          activebackground=active_bg_clr,
                                           font=button_font,
                                           width=button_width,
                                           command=self.rehome_TT_callback)
@@ -47,25 +51,28 @@ class Initialise():
         self.rehome_PAL_button_fgclr = "white"
         self.button_rehome_PAL = tk.Button(self.info_initialise, text="Rehome PAL",
                                            bg=self.rehome_PAL_button_bkclr, fg=self.rehome_PAL_button_fgclr,
-                                           activebackground=foreground_clr_on,
+                                           activebackground=active_bg_clr,
                                            font=button_font,
-                                           width=button_width)
+                                           width=button_width,
+                                           command=self.rehome_PAL_callback)
         self.button_rehome_PAL.place(x=40, y=70)
 
         # create and define MAG2PAL_NEAR button
         self.button_Mag2PAL_near = tk.Button(self.info_initialise, text="Move Chute to Gripper",
                                              bg=background_clr, fg=foreground_clr,
-                                             activebackground=foreground_clr_on,
+                                             activebackground=active_bg_clr,
                                              font=button_font,
-                                             width=button_width)
+                                             width=button_width,
+                                             command=self.Mag2PAL_near)
         self.button_Mag2PAL_near.place(x=40, y=120)
 
         # create and define MAG2PAL_FAR button
         self.button_Mag2PAL_far = tk.Button(self.info_initialise, text="Move Chute to Magazine",
                                             bg=background_clr, fg=foreground_clr,
-                                            activebackground=foreground_clr_on,
+                                            activebackground=active_bg_clr,
                                             font=button_font,
-                                            width=button_width)
+                                            width=button_width,
+                                            command=self.Mag2PAL_far)
         self.button_Mag2PAL_far.place(x=40, y=170)
 
         # create 8 entries for 8 cartridge mappings
@@ -139,3 +146,107 @@ class Initialise():
         else:
             self.state.process_log += self.state.timestamped_msg("TT x-axis already homed, no need to repeat\n")
             print(self.state.process_log.split("\n")[-2])
+
+        # check if axes of tt are successfully homed
+        cmd = RR_CommandGenerator.ttMovingQuery(axis="001")
+        self.state.ttPort.write(cmd)
+        response_tt_1 = self.state.ttPort.readline()
+        cmd = RR_CommandGenerator.ttMovingQuery(axis="010")
+        self.state.ttPort.write(cmd)
+        response_tt_2 = self.state.ttPort.readline()
+        cmd = RR_CommandGenerator.ttMovingQuery(axis="100")
+        self.state.ttPort.write(cmd)
+        response_tt_3 = self.state.ttPort.readline()
+
+        response_tt_1 = '0x' + str(response_tt_1)[11]
+        response_tt_2 = '0x' + str(response_tt_2)[11]
+        response_tt_3 = '0x' + str(response_tt_3)[11]
+
+        self.state.homeax1 = ((eval(response_tt_1) & 0b0100) == 4)
+        self.state.homeax2 = ((eval(response_tt_2) & 0b0100) == 4)
+        self.state.homeax3 = ((eval(response_tt_3) & 0b0100) == 4)
+
+        self.rehome_TT_button_state = self.state.homeax1 and self.state.homeax2 and self.state.homeax3
+        self.rehome_TT_button_bkclr = "green" if self.rehome_TT_button_state else "red"
+        self.button_rehome_TT.config(bg=self.rehome_TT_button_bkclr)
+
+
+    def rehome_PAL_callback(self):
+        # check to see if PAL is homed
+        cmd = self.state.pal_message["palQuery_home"].encode("ascii")
+        self.state.palPort.write(cmd)
+        response_pal = self.state.palPort.readline()
+        response_pal = '0x' + str(response_pal)[11]
+        pal = (eval(response_pal) & 0b01) == 1
+
+        # if PAL is not homed, perform home operation
+        if not(pal):
+            self.state.process_log += self.state.timestamped_msg("executing PAL home...\n")
+            print(self.state.process_log.split("\n")[-2])
+            cmd = self.state.pal_message["palHome"].encode("ascii")
+            self.state.palPort.write(cmd)
+            unused_response = self.state.palPort.readline()
+            # moving?
+            self.state.tt_pal_moving()
+        else:
+            self.state.process_log += self.state.timestamped_msg("PAL already homed, no need to repeat\n")
+            print(self.state.process_log.split("\n")[-2])
+
+        # check to see if PAL is successfully homed
+        cmd = self.state.pal_message["palQuery_home"].encode("ascii")
+        self.state.palPort.write(cmd)
+        response_pal = self.state.palPort.readline()
+        response_pal = '0x' + str(response_pal)[11]
+        self.state.homeax4 = (eval(response_pal) & 0b01) == 1
+        self.rehome_PAL_button_state = self.state.homeax4
+
+        self.rehome_PAL_button_bkclr = "green" if self.rehome_PAL_button_state else "red"
+        self.button_rehome_PAL.config(bg=self.rehome_PAL_button_bkclr)
+
+
+    def Mag2PAL_near(self):
+        # move palette away from gripper
+        cmd = self.state.pal_message["palSet_position_1"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        cmd = self.state.pal_message["palCSTR_on"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        self.state.process_log += self.state.timestamped_msg("palette moved to position 2\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        # moving?
+        self.state.tt_pal_moving()
+        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        self.button_Mag2PAL_near.config(bg=active_bg_clr, fg=active_fg_clr)
+        self.button_Mag2PAL_far.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+
+
+    def Mag2PAL_far(self):
+        # move palette away from gripper
+        cmd = self.state.pal_message["palSet_position_2"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        cmd = self.state.pal_message["palCSTR_on"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        self.state.process_log += self.state.timestamped_msg("palette moved to position 2\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        # moving?
+        self.state.tt_pal_moving()
+        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        self.button_Mag2PAL_far.config(bg=active_bg_clr, fg=active_fg_clr)
+        self.button_Mag2PAL_near.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
