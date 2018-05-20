@@ -21,10 +21,10 @@ import time
 import pickle
 
 # initialise
-POLLING_DELAY = 0.1         # time in SECONDS between repeated requests to see if a robot is moving
-process_log = ""
-mosaic_number = 0
-LOG_file_save_location = "C:/Users/Finlay/Documents/iai_log_files/"
+# POLLING_DELAY = 0.1         # time in SECONDS between repeated requests to see if a robot is moving
+# process_log = ""
+# mosaic_number = 0
+# LOG_file_save_location = "C:/Users/Finlay/Documents/iai_log_files/"
 
 
 # def readImage():

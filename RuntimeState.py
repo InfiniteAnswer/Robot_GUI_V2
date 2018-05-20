@@ -1,5 +1,6 @@
 import RR_CommandGenerator
 import serial  # used for serial communications. came from <pip3.6 install pyserial>
+import time
 
 
 class RuntimeState():
@@ -16,6 +17,10 @@ class RuntimeState():
         self.printpause = False
         self.axismoving = False
         self.process_log = ""
+
+        self.POLLING_DELAY = 0.1  # time in SECONDS between repeated requests to see if a robot is moving
+        self.mosaic_number = 0
+        self.LOG_file_save_location = "C:/Users/Finlay/Documents/iai_log_files/"
 
         self.param_robo = {"tt_port": "COM4",
                            "pal_port": "COM3",
@@ -61,6 +66,31 @@ class RuntimeState():
                                        baudrate=self.param_robo["cntrl_baud"],
                                        timeout=self.param_robo["cntrl_timeout"])
 
+        # enable Modbus communications
+        cmd = self.pal_message["enableModbus"].encode("ascii")
+        self.palPort.write(cmd)
+        response_pal = self.palPort.readline()
+
+        # NOT YET DONE... connect to two robots and check connections with a test command
+
+        # enable tt robot servos
+        self.process_log += self.timestamped_msg("enabling servo for axis 1\n")
+        print(self.process_log.split("\n")[-2])
+        self.ttPort.write(RR_CommandGenerator.ttServo(axis="001", on=1))
+        unused_response = self.ttPort.readline()
+        self.process_log += self.timestamped_msg("enabling servo for axis 2\n")
+        print(self.process_log.split("\n")[-2])
+        self.ttPort.write(RR_CommandGenerator.ttServo(axis="010", on=1))
+        unused_response = self.ttPort.readline()
+        self.process_log += self.timestamped_msg("enabling servo for axis 3\n")
+        print(self.process_log.split("\n")[-2])
+        self.ttPort.write(RR_CommandGenerator.ttServo(axis="100", on=1))
+        unused_response = self.ttPort.readline()
+        time.sleep(1)   # DELAY of 1 SECOND to ensure the servos are active before proceeding
+
+
+
+
     def tt_moving_query(self):
         # ask tt if moving and save response
         cmd = RR_CommandGenerator.ttMovingQuery(axis="001")
@@ -83,82 +113,61 @@ class RuntimeState():
         tt = tt_1 or tt_2 or tt_3
         return (tt)
 
-    def pal_moving_query(palPort):
+
+    def pal_moving_query(self):
         # ask pal if moving and save response
-        cmd = pal_message["palQuery_moving"].encode("ascii")
-        palPort.write(cmd)
-        response_pal = palPort.readline()
+        cmd = self.pal_message["palQuery_moving"].encode("ascii")
+        self.palPort.write(cmd)
+        response_pal = self.palPort.readline()
 
         # perform logical test on response and generate true/false answers
         response_pal = '0x' + str(response_pal)[11:12]
         pal = (eval(response_pal) & 0b10) == 2
         return (pal)
 
-    def tt_moving(ttPort):
+    def tt_moving(self):
         global process_log
-        timeout = time.time() + param_robo["moving_timeout"]
-        while (tt_moving_query(ttPort)):
+        timeout = time.time() + self.param_robo["moving_timeout"]
+        while (self.tt_moving_query()):
             if time.time() > timeout:
                 process_log += "WARNING! TT timed out. Unable to reach set-point after " + \
-                               str(param_robo["moving_timeout"]) + " seconds\n"
+                               str(self.param_robo["moving_timeout"]) + " seconds\n"
                 print(process_log.split("\n")[-2])
                 break
-            time.sleep(POLLING_DELAY)
+            time.sleep(self.POLLING_DELAY)
 
-    def pal_moving_query(palPort):
-        # ask pal if moving and save response
-        cmd = pal_message["palQuery_moving"].encode("ascii")
-        palPort.write(cmd)
-        response_pal = palPort.readline()
-
-        # perform logical test on response and generate true/false answers
-        response_pal = '0x' + str(response_pal)[11:12]
-        pal = (eval(response_pal) & 0b10) == 2
-        return (pal)
-
-    def tt_moving(ttPort):
+    def pal_moving(self):
         global process_log
-        timeout = time.time() + param_robo["moving_timeout"]
-        while (tt_moving_query(ttPort)):
-            if time.time() > timeout:
-                process_log += "WARNING! TT timed out. Unable to reach set-point after " + \
-                               str(param_robo["moving_timeout"]) + " seconds\n"
-                print(process_log.split("\n")[-2])
-                break
-            time.sleep(POLLING_DELAY)
-
-    def pal_moving(palPort):
-        global process_log
-        timeout = time.time() + param_robo["moving_timeout"]
-        while (pal_moving_query(palPort)):
+        timeout = time.time() + self.param_robo["moving_timeout"]
+        while (self.pal_moving_query()):
             if time.time() > timeout:
                 process_log += "WARNING! PAL timed out. Unable to reach set-point after " + \
-                               str(param_robo["moving_timeout"]) + " seconds\n"
+                               str(self.param_robo["moving_timeout"]) + " seconds\n"
                 print(process_log.split("\n")[-2])
                 break
-            time.sleep(POLLING_DELAY)
+            time.sleep(self.POLLING_DELAY)
 
-    def tt_pal_moving(ttPort, palPort):
+    def tt_pal_moving(self):
         global process_log
-        timeout = time.time() + param_robo["moving_timeout"]
-        while (tt_moving_query(ttPort) or pal_moving_query(palPort)):
+        timeout = time.time() + self.param_robo["moving_timeout"]
+        while (self.tt_moving_query() or self.pal_moving_query()):
             if time.time() > timeout:
                 process_log += "WARNING! TT or PAL timed out. Unable to reach set-point after " + \
-                               str(param_robo["moving_timeout"]) + " seconds\n"
+                               str(self.param_robo["moving_timeout"]) + " seconds\n"
                 print(process_log.split("\n")[-2])
                 break
-            time.sleep(POLLING_DELAY)
+            time.sleep(self.POLLING_DELAY)
 
-    def pixel2table(x_n, y_n):
-        table_x = param_tiles["tt_origin_x"] + x_n * (param_tiles["tile_width"] + param_tiles["inter_tile_hgap"])
-        table_y = param_tiles["tt_origin_y"] + y_n * (param_tiles["tile_height"] + param_tiles["inter_tile_vgap"])
+    def pixel2table(self, x_n, y_n):
+        table_x = self.param_tiles["tt_origin_x"] + x_n * (self.param_tiles["tile_width"] + self.param_tiles["inter_tile_hgap"])
+        table_y = self.param_tiles["tt_origin_y"] + y_n * (self.param_tiles["tile_height"] + self.param_tiles["inter_tile_vgap"])
         return (table_x, table_y)
 
-    def colour2palette(c_n):
-        palette_x = param_tiles["pal_origin_x"] + c_n * (param_tiles["palette_pitch"])
+    def colour2palette(self, c_n):
+        palette_x = self.param_tiles["pal_origin_x"] + c_n * (self.param_tiles["palette_pitch"])
         return palette_x
 
-    def timestamped_msg(msg):
+    def timestamped_msg(self, msg):
         string = str(time.asctime(time.localtime(time.time()))) + ": " + msg
         return (string)
 

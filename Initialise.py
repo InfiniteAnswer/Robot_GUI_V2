@@ -85,9 +85,6 @@ class Initialise():
             self.cartridge_label_mapping[i].place(x=140 + i * 30, y=0)
             self.cartridge_label_mapping_entry[i].place(x=140 + i * 30, y=33)
 
-    def timestamped_msg(self, msg):
-        string = str(time.asctime(time.localtime(time.time()))) + ": " + msg
-        return (string)
 
     def rehome_TT_callback(self):
         # check if axes of tt are homed
@@ -111,34 +108,34 @@ class Initialise():
         tt_3_home_complete = ((eval(response_tt_3) & 0b0100) == 4)
 
         if not (tt_3_home_complete):
-            self.state.process_log += self.timestamped_msg("executing TT home for z-axis...\n")
-            # print(self.state.process_log.split("\n")[-2])
+            self.state.process_log += self.state.timestamped_msg("executing TT home for z-axis...\n")
+            print(self.state.process_log.split("\n")[-2])
             self.state.ttPort.write(RR_CommandGenerator.ttHome(axis="100"))
             unused_response = self.state.ttPort.readline()
             # moving?
-            tt_pal_moving(self.state.ttPort, self.state.palPort)
+            self.state.tt_pal_moving()
         else:
-            self.state.process_log += self.timestamped_msg("TT z-axis already homed, no need to repeat\n")
-            # print(self.state.process_log.split("\n")[-2])
+            self.state.process_log += self.state.timestamped_msg("TT z-axis already homed, no need to repeat\n")
+            print(self.state.process_log.split("\n")[-2])
 
         if not (tt_2_home_complete):
-            self.state.process_log += self.timestamped_msg("executing TT home for y-axis...\n")
-            # print(self.state.process_log.split("\n")[-2])
+            self.state.process_log += self.state.timestamped_msg("executing TT home for y-axis...\n")
+            print(self.state.process_log.split("\n")[-2])
             self.state.ttPort.write(RR_CommandGenerator.ttHome(axis="010"))
             unused_response = self.state.ttPort.readline()
             # moving?
-            tt_pal_moving(self.state.ttPort, self.state.palPort)
+            self.state.tt_pal_moving()
         else:
-            self.state.process_log += self.timestamped_msg("TT y-axis already homed, no need to repeat\n")
-            # print(self.state.process_log.split("\n")[-2])
+            self.state.process_log += self.state.timestamped_msg("TT y-axis already homed, no need to repeat\n")
+            print(self.state.process_log.split("\n")[-2])
 
         if not (tt_1_home_complete):
-            self.state.process_log += self.timestamped_msg("executing TT home for x-axis...\n")
-            # print(self.state.process_log.split("\n")[-2])
+            self.state.process_log += self.state.timestamped_msg("executing TT home for x-axis...\n")
+            print(self.state.process_log.split("\n")[-2])
             self.state.ttPort.write(RR_CommandGenerator.ttHome(axis="001"))
             unused_response = self.state.ttPort.readline()
             # moving?
-            tt_pal_moving(self.state.ttPort, self.state.palPort)
+            self.state.tt_pal_moving()
         else:
-            self.state.process_log += self.timestamped_msg("TT x-axis already homed, no need to repeat\n")
-            # print(self.state.process_log.split("\n")[-2])
+            self.state.process_log += self.state.timestamped_msg("TT x-axis already homed, no need to repeat\n")
+            print(self.state.process_log.split("\n")[-2])
