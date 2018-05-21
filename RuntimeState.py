@@ -17,6 +17,10 @@ class RuntimeState():
         self.printpause = False
         self.axismoving = False
         self.process_log = ""
+        self.last_commanded_ax1 = 0
+        self.last_commanded_ax2 = 0
+        self.last_commanded_ax3 = 0
+        self.last_commanded_ax4 = 1
 
         self.POLLING_DELAY = 0.1  # time in SECONDS between repeated requests to see if a robot is moving
         self.mosaic_number = 0
@@ -36,6 +40,7 @@ class RuntimeState():
                            "gripper_up": 30,
                            "gripper_down_palette": 39.75,
                            "gripper_down_table": 73.5,
+                           "gripper_safety_height": 10,
                            "moving_timeout": 90}
 
         self.param_tiles = {"tile_width": 20,
@@ -125,10 +130,57 @@ class RuntimeState():
         pal = (eval(response_pal) & 0b10) == 2
         return (pal)
 
+    def printpause_sequence(self):
+        # send stop command x
+        # send stop cammand y
+        # send stop command z
+
+        # send stop command xyz
+        cmd = RR_CommandGenerator.ttStop(axis="111")
+        self.ttPort.write(cmd)
+        response_tt_1 = self.ttPort.readline()
+        self.process_log += self.timestamped_msg("tt robot motion stopped\n")
+        print(self.process_log.split("\n")[-2] + "\n")
+
+        # raise z to safety height
+        time.sleep(1)
+        self.ttPort.write(
+            RR_CommandGenerator.ttMoveAbs(axis="100", axis3_pos=self.param_robo["gripper_safety_height"]))
+        unused_response = self.ttPort.readline()
+        self.process_log += self.timestamped_msg("gripper up to safety height\n")
+        print(self.process_log.split("\n")[-2] + "\n")
+
+        # safety delay of 3s
+        time.sleep(3)
+
+        while self.printpause:
+            time.sleep(self.POLLING_DELAY)
+
+        # goto last x position
+        self.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="001", axis1_pos=self.last_commanded_ax1))
+        unused_response = self.ttPort.readline()
+        self.process_log += self.timestamped_msg("returning ax1-table to last commanded position\n")
+        print(self.process_log.split("\n")[-2])
+
+        # goto last y position
+        self.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="010", axis2_pos=self.last_commanded_ax2))
+        unused_response = self.ttPort.readline()
+        self.process_log += self.timestamped_msg("returning ax2-bridge to last commanded position\n")
+        print(self.process_log.split("\n")[-2])
+
+        # goto last z position
+        self.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="100", axis3_pos=self.last_commanded_ax3))
+        unused_response = self.ttPort.readline()
+        self.process_log += self.timestamped_msg("returning ax3-gripper to last commanded position\n")
+        print(self.process_log.split("\n")[-2])
+
+
     def tt_moving(self):
         global process_log
         timeout = time.time() + self.param_robo["moving_timeout"]
         while (self.tt_moving_query()):
+            if self.printpause:
+                self.printpause_sequence()
             if time.time() > timeout:
                 process_log += "WARNING! TT timed out. Unable to reach set-point after " + \
                                str(self.param_robo["moving_timeout"]) + " seconds\n"
@@ -140,6 +192,8 @@ class RuntimeState():
         global process_log
         timeout = time.time() + self.param_robo["moving_timeout"]
         while (self.pal_moving_query()):
+            if self.printpause:
+                self.printpause_sequence()
             if time.time() > timeout:
                 process_log += "WARNING! PAL timed out. Unable to reach set-point after " + \
                                str(self.param_robo["moving_timeout"]) + " seconds\n"
@@ -151,6 +205,8 @@ class RuntimeState():
         global process_log
         timeout = time.time() + self.param_robo["moving_timeout"]
         while (self.tt_moving_query() or self.pal_moving_query()):
+            if self.printpause:
+                self.printpause_sequence()
             if time.time() > timeout:
                 process_log += "WARNING! TT or PAL timed out. Unable to reach set-point after " + \
                                str(self.param_robo["moving_timeout"]) + " seconds\n"

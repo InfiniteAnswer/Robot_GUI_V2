@@ -7,6 +7,8 @@ from tkinter import filedialog
 import pickle
 import RR_CommandGenerator
 import time
+import threading
+from threading import Thread
 
 background_clr = "grey10"
 foreground_clr = "white"
@@ -55,8 +57,17 @@ class TilePrint():
                                       bg=background_clr, fg=foreground_clr,
                                       activebackground=active_bg_clr,
                                       font=button_font,
-                                      width=button_width)
+                                      width=int(button_width / 2) - 1,
+                                      command=self.pause_callback)
         self.button_pause.place(x=40, y=120)
+
+        self.button_restart = tk.Button(self.info_tileprint, text="Restart",
+                                        bg=background_clr, fg=foreground_clr,
+                                        activebackground=active_bg_clr,
+                                        font=button_font,
+                                        width=int(button_width / 2) - 1,
+                                        command=self.restart_callback)
+        self.button_restart.place(x=440, y=120, anchor=tk.NE)
 
         self.button_abort = tk.Button(self.info_tileprint, text="Abort",
                                       bg=background_clr, fg=foreground_clr,
@@ -73,6 +84,8 @@ class TilePrint():
         self.filename = ""
         self.image = []
         self.image_loaded = False
+
+        self.info_tileprint.bind("<KeyPress>", self.keypress_callback)
 
     def loadfile_callback(self):
         # # OPTION 1: generate a new image from random tiles
@@ -97,8 +110,8 @@ class TilePrint():
         #         [1, 0, 1],
         #         [0, 1, 0]]
         #
-        self.image =[[0, 1],
-                [1, 0]]
+        self.image = [[0, 1],
+                      [1, 0]]
         #
         # self.image =[[0, 0, 0, 0, 0],
         #         [0, 0, 0, 0, 0]]
@@ -120,15 +133,40 @@ class TilePrint():
         self.button_loadfile.config(bg=active_bg_clr, fg=active_fg_clr)
 
     def start_callback(self):
-        if self.image_loaded:
+        if (self.image_loaded and not self.state.printing):
             self.button_start.config(bg=active_bg_clr, fg=active_fg_clr)
-            self.start_sequence()
+
+            # grab focus on current window to ensure any key press is caught as an event
+            #self.info_tileprint.grab_set()
+            time.sleep(2) # safety delay before interpreting keypress as request to pause
+
+            self.state.printing = True
+            th = Thread(target=self.start_sequence)
+            th.start()
+            self.info_tileprint.focus_set()
+            self.info_tileprint.grab_set()
 
     def pause_callback(self):
-        pass
+        if (self.state.printing and not self.state.printpause):
+            self.state.printpause = True
+            self.button_pause.config(bg=active_bg_clr, fg=active_fg_clr)
+            self.button_start.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+            self.button_restart.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+
+    def restart_callback(self):
+        if self.state.printpause:
+            self.state.printpause = False
+            self.button_pause.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+            self.button_start.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+            self.button_restart.config(bg=active_bg_clr, fg=active_fg_clr)
 
     def abort_callback(self):
         pass
+
+    def keypress_callback(self, e):
+        print("KEY PRESSED")
+        if self.state.printing:
+            self.pause_callback()
 
     def start_sequence(self):
         # gripper up
@@ -155,6 +193,7 @@ class TilePrint():
         # gripper up
         self.state.ttPort.write(
             RR_CommandGenerator.ttMoveAbs(axis="100", axis3_pos=self.state.param_robo["gripper_up"]))
+        self.state.last_commanded_ax3 = self.state.param_robo["gripper_up"]
         unused_response = self.state.ttPort.readline()
         self.state.process_log += self.state.timestamped_msg("gripper up\n")
         print(self.state.process_log.split("\n")[-2])
@@ -190,6 +229,7 @@ class TilePrint():
 
             # move to next table row position
             self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="001", axis1_pos=y))
+            self.state.last_commanded_ax1 = y
             unused_response = self.state.ttPort.readline()
             self.state.process_log += self.state.timestamped_msg("tt moved to row: ") + str(row_i) + "\n"
             print(self.state.process_log.split("\n")[-2])
@@ -209,6 +249,7 @@ class TilePrint():
 
                 # move to next colour palette position
                 self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="010", axis2_pos=c))
+                self.state.last_commanded_ax2 = c
                 unused_response = self.state.ttPort.readline()
                 self.state.process_log += self.state.timestamped_msg("tt moved to colour: ") + \
                                           str(self.image[row_i][col_i]) + \
@@ -239,6 +280,7 @@ class TilePrint():
                 # move gripper down to palette
                 self.state.ttPort.write(
                     RR_CommandGenerator.ttMoveAbs(axis="100", axis3_pos=self.state.param_robo["gripper_down_palette"]))
+                self.state.last_commanded_ax3 = self.state.param_robo["gripper_down_palette"]
                 unused_response = self.state.ttPort.readline()
                 self.state.process_log += self.state.timestamped_msg("gripper down to palette\n")
                 print(self.state.process_log.split("\n")[-2] + "\n")
@@ -264,6 +306,7 @@ class TilePrint():
                 # move gripper up
                 self.state.ttPort.write(
                     RR_CommandGenerator.ttMoveAbs(axis="100", axis3_pos=self.state.param_robo["gripper_up"]))
+                self.state.last_commanded_ax3 = self.state.param_robo["gripper_up"]
                 unused_response = self.state.ttPort.readline()
                 self.state.process_log += self.state.timestamped_msg("gripper up\n")
                 print(self.state.process_log.split("\n")[-2] + "\n")
@@ -296,6 +339,7 @@ class TilePrint():
 
                 # move gripper to selected column
                 self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="010", axis2_pos=x))
+                self.state.last_commanded_ax2 = x
                 unused_response = self.state.ttPort.readline()
                 self.state.process_log += self.state.timestamped_msg("tt moved to table tile: ") + str(
                     col_i) + " (axis 2 = " + str(x) + ")\n"
@@ -309,6 +353,7 @@ class TilePrint():
                 # move gripper down to table
                 self.state.ttPort.write(
                     RR_CommandGenerator.ttMoveAbs(axis="100", axis3_pos=self.state.param_robo["gripper_down_table"]))
+                self.state.last_commanded_ax3 = self.state.param_robo["gripper_down_table"]
                 unused_response = self.state.ttPort.readline()
                 self.state.process_log += self.state.timestamped_msg("gripper down to table\n")
                 print(self.state.process_log.split("\n")[-2] + "\n")
@@ -345,6 +390,7 @@ class TilePrint():
                 # move gripper up
                 self.state.ttPort.write(
                     RR_CommandGenerator.ttMoveAbs(axis="100", axis3_pos=self.state.param_robo["gripper_up"]))
+                self.state.last_commanded_ax3 = self.state.param_robo["gripper_up"]
                 unused_response = self.state.ttPort.readline()
                 self.state.process_log += self.state.timestamped_msg("gripper up\n")
                 print(self.state.process_log.split("\n")[-2] + "\n")
@@ -366,3 +412,6 @@ class TilePrint():
                     self.state.param_robo["gripper_open_wait"]) + "seconds\n"
                 print(self.state.process_log.split("\n")[-2] + "\n")
         self.button_start.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+        self.button_restart.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+        self.info_tileprint.grab_release()
+        self.state.printing = False

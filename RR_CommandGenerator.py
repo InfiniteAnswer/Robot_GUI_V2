@@ -87,6 +87,33 @@ def ttOutputPortSet(station="99",
     message += checksum + '\r\n'
     return (message.encode('ascii'))
 
+def ttStop(station="99",
+           axis="111"):
+
+    axis_bytes = format(eval("0b" + axis), '02x').upper()
+    appended_command_bytes = "00"
+
+    if axis == "001":
+        message = "!" + station + "238" + axis_bytes + appended_command_bytes
+    if axis == "010":
+        message = "!" + station + "238" + axis_bytes + appended_command_bytes
+    if axis == "011":
+        message = "!" + station + "238" + axis_bytes + appended_command_bytes
+    if axis == "100":
+        message = "!" + station + "238" + axis_bytes + appended_command_bytes
+    if axis == "101":
+        message = "!" + station + "238" + axis_bytes + appended_command_bytes
+    if axis == "110":
+        message = "!" + station + "238" + axis_bytes + appended_command_bytes
+    if axis == "111":
+        message = "!" + station + "238" + axis_bytes + appended_command_bytes
+
+
+    checksum = calcchecksum(message)
+    message += checksum + '\r\n'
+    return (message.encode('ascii'))
+
+
 # ttHome(axis = '001')
 # ttHome(axis = '010')
 # ttHome(axis="100")
