@@ -10,6 +10,8 @@ class RuntimeState():
         self.homeax3 = False
         self.homeax4 = False
         self.printing = False
+        self.printSpeed = 10    # This is the percentage of maxTTmovingSpeed
+        self.maxTTmovingSpeed = 150
         self.abort = False
         self.magazineinitialised = False
         self.paletteinitialised = False

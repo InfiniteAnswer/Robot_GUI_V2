@@ -79,6 +79,7 @@ class TilePrint():
         self.print_speed = tk.Scale(self.info_tileprint, from_=10, to=100, resolution=10, orient=tk.HORIZONTAL,
                                     label="% of Max Speed",
                                     bd=0, highlightthickness=0, fg="yellow", bg="grey10", length=400)
+        self.print_speed.bind("<ButtonRelease-1>", self.updatePrintSpeed_callback)
         self.print_speed.place(x=40, y=220)
 
         self.filename = ""
@@ -106,12 +107,12 @@ class TilePrint():
         #          [1, 0, 1, 0, 1],
         #          [0, 1, 0, 1, 0]]
         #
-        # self.image =[[0,  1, 0],
-        #         [1, 0, 1],
-        #         [0, 1, 0]]
-        #
-        self.image = [[0, 1],
-                      [1, 0]]
+        self.image = [[0, 1, 0],
+                      [1, 0, 1],
+                      [0, 1, 0]]
+
+        # self.image = [[0, 1],
+        #              [1, 0]]
         #
         # self.image =[[0, 0, 0, 0, 0],
         #         [0, 0, 0, 0, 0]]
@@ -132,13 +133,16 @@ class TilePrint():
         self.image_loaded = True
         self.button_loadfile.config(bg=active_bg_clr, fg=active_fg_clr)
 
+    def updatePrintSpeed_callback(self, e):
+        self.state.printSpeed = self.print_speed.get()
+
     def start_callback(self):
         if (self.image_loaded and not self.state.printing):
             self.button_start.config(bg=active_bg_clr, fg=active_fg_clr)
 
             # grab focus on current window to ensure any key press is caught as an event
-            #self.info_tileprint.grab_set()
-            time.sleep(2) # safety delay before interpreting keypress as request to pause
+            # self.info_tileprint.grab_set()
+            time.sleep(2)  # safety delay before interpreting keypress as request to pause
 
             self.state.printing = True
             th = Thread(target=self.start_sequence)
@@ -192,7 +196,9 @@ class TilePrint():
 
         # gripper up
         self.state.ttPort.write(
-            RR_CommandGenerator.ttMoveAbs(axis="100", axis3_pos=self.state.param_robo["gripper_up"]))
+            RR_CommandGenerator.ttMoveAbs(axis="100",
+                                          speed=int(self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                          axis3_pos=self.state.param_robo["gripper_up"]))
         self.state.last_commanded_ax3 = self.state.param_robo["gripper_up"]
         unused_response = self.state.ttPort.readline()
         self.state.process_log += self.state.timestamped_msg("gripper up\n")
@@ -228,7 +234,10 @@ class TilePrint():
             x, y = self.state.pixel2table(0, row_i)
 
             # move to next table row position
-            self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="001", axis1_pos=y))
+            self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="001",
+                                                                  speed=int(
+                                                                      self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                                                  axis1_pos=y))
             self.state.last_commanded_ax1 = y
             unused_response = self.state.ttPort.readline()
             self.state.process_log += self.state.timestamped_msg("tt moved to row: ") + str(row_i) + "\n"
@@ -248,7 +257,10 @@ class TilePrint():
                 c = self.state.colour2palette(self.image[row_i][col_i])
 
                 # move to next colour palette position
-                self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="010", axis2_pos=c))
+                self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="010",
+                                                                      speed=int(
+                                                                          self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                                                      axis2_pos=c))
                 self.state.last_commanded_ax2 = c
                 unused_response = self.state.ttPort.readline()
                 self.state.process_log += self.state.timestamped_msg("tt moved to colour: ") + \
@@ -279,7 +291,9 @@ class TilePrint():
 
                 # move gripper down to palette
                 self.state.ttPort.write(
-                    RR_CommandGenerator.ttMoveAbs(axis="100", axis3_pos=self.state.param_robo["gripper_down_palette"]))
+                    RR_CommandGenerator.ttMoveAbs(axis="100",
+                                                  speed=int(self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                                  axis3_pos=self.state.param_robo["gripper_down_palette"]))
                 self.state.last_commanded_ax3 = self.state.param_robo["gripper_down_palette"]
                 unused_response = self.state.ttPort.readline()
                 self.state.process_log += self.state.timestamped_msg("gripper down to palette\n")
@@ -305,7 +319,9 @@ class TilePrint():
 
                 # move gripper up
                 self.state.ttPort.write(
-                    RR_CommandGenerator.ttMoveAbs(axis="100", axis3_pos=self.state.param_robo["gripper_up"]))
+                    RR_CommandGenerator.ttMoveAbs(axis="100",
+                                                  speed=int(self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                                  axis3_pos=self.state.param_robo["gripper_up"]))
                 self.state.last_commanded_ax3 = self.state.param_robo["gripper_up"]
                 unused_response = self.state.ttPort.readline()
                 self.state.process_log += self.state.timestamped_msg("gripper up\n")
@@ -338,7 +354,10 @@ class TilePrint():
                 # nons=input("press enter")
 
                 # move gripper to selected column
-                self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="010", axis2_pos=x))
+                self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="010",
+                                                                      speed=int(
+                                                                          self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                                                      axis2_pos=x))
                 self.state.last_commanded_ax2 = x
                 unused_response = self.state.ttPort.readline()
                 self.state.process_log += self.state.timestamped_msg("tt moved to table tile: ") + str(
@@ -352,7 +371,9 @@ class TilePrint():
 
                 # move gripper down to table
                 self.state.ttPort.write(
-                    RR_CommandGenerator.ttMoveAbs(axis="100", axis3_pos=self.state.param_robo["gripper_down_table"]))
+                    RR_CommandGenerator.ttMoveAbs(axis="100",
+                                                  speed=int(self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                                  axis3_pos=self.state.param_robo["gripper_down_table"]))
                 self.state.last_commanded_ax3 = self.state.param_robo["gripper_down_table"]
                 unused_response = self.state.ttPort.readline()
                 self.state.process_log += self.state.timestamped_msg("gripper down to table\n")
@@ -389,7 +410,9 @@ class TilePrint():
 
                 # move gripper up
                 self.state.ttPort.write(
-                    RR_CommandGenerator.ttMoveAbs(axis="100", axis3_pos=self.state.param_robo["gripper_up"]))
+                    RR_CommandGenerator.ttMoveAbs(axis="100",
+                                                  speed=int(self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                                  axis3_pos=self.state.param_robo["gripper_up"]))
                 self.state.last_commanded_ax3 = self.state.param_robo["gripper_up"]
                 unused_response = self.state.ttPort.readline()
                 self.state.process_log += self.state.timestamped_msg("gripper up\n")
