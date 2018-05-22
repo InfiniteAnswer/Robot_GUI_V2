@@ -30,34 +30,34 @@ class Controls():
         self.flag_printpause = False
 
         # Create blank grey default info panel
-        background_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\grey10_480x315.jpg")
+        background_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\480x315_BLACK.jpg")
         self.background_image_tk = ImageTk.PhotoImage(background_image)
         self.info_controls = tk.Label(background, image=self.background_image_tk, width=480, height=315)
         self.info_controls.place(x=130, y=135)
 
         # Define images for 4 main buttons, header banner, and overall system outline
-        settings_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\Settings_small.jpg")
+        settings_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\SETTINGS_BUTTON.jpg")
         self.settings_image_tk = ImageTk.PhotoImage(settings_image)
 
-        manual_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\Manual_small.jpg")
+        manual_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\MANUAL_BUTTON.jpg")
         self.manual_image_tk = ImageTk.PhotoImage(manual_image)
 
-        print_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\Print_small.jpg")
+        print_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\PRINT_BUTTON.jpg")
         self.print_image_tk = ImageTk.PhotoImage(print_image)
 
-        initialise_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\Initialise_small.jpg")
+        initialise_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\INITIALISE_BUTTON.jpg")
         self.initialise_image_tk = ImageTk.PhotoImage(initialise_image)
 
-        PxlRT_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\PxlRT_Studio4.jpg")
+        PxlRT_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\BANNER.jpg")
         self.PxlRT_image_tk = ImageTk.PhotoImage(PxlRT_image)
 
-        tt_manual_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\tt_manual.jpg")
-        self.tt_manual_image_tk = ImageTk.PhotoImage(tt_manual_image)
-
+        # tt_manual_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\tt_manual.jpg")
+        # self.tt_manual_image_tk = ImageTk.PhotoImage(tt_manual_image)
+        #
         # Add logo and banner to background
         self.PxlRT_icon = tk.Label(self.background, image=self.PxlRT_image_tk, bd=0, highlightthickness=0,
                                    relief=tk.RAISED)
-        self.PxlRT_icon.place(x=30, y=30)
+        self.PxlRT_icon.place(x=0, y=10)
 
         # Create 4 main buttons
         self.button_settings = tk.Button(self.background, image=self.settings_image_tk, bd=1,

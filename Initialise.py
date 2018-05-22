@@ -24,7 +24,7 @@ button_width = 30
 class Initialise():
     def __init__(self, parent, state):
         self.state = state
-        background_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\grey10_480x315.jpg")
+        background_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\480x315_BLACK.jpg")
         self.background_image_tk = ImageTk.PhotoImage(background_image)
         self.info_initialise = tk.Label(parent, image=self.background_image_tk, width=480, height=315)
         self.info_initialise.place(x=130, y=135)

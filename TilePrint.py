@@ -28,7 +28,7 @@ button_width = 30
 class TilePrint():
     def __init__(self, parent, state):
         self.state = state
-        background_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\grey10_480x315.jpg")
+        background_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\480x315_BLACK.jpg")
         self.background_image_tk = ImageTk.PhotoImage(background_image)
         self.info_tileprint = tk.Label(parent, image=self.background_image_tk, width=480, height=315)
         self.info_tileprint.place(x=130, y=135)
@@ -100,16 +100,15 @@ class TilePrint():
         #             new_row.append(randint(0, random_palette_tiles))
         #         self.image.append(new_row)
 
-        # # OPTION 2: directly create 2 list of lists for the mosaic
-        # self.image = [[0, 1, 0, 1, 0],
-        #          [1, 0, 1, 0, 1],
-        #          [0, 1, 0, 1, 0],
-        #          [1, 0, 1, 0, 1],
-        #          [0, 1, 0, 1, 0]]
-        #
-        self.image = [[0, 1, 0],
-                      [1, 0, 1],
-                      [0, 1, 0]]
+        # OPTION 2: directly create 2 list of lists for the mosaic
+        self.image = [[0, 1, 0, 1, 0, 1, 0],
+                      [1, 0, 1, 0, 1, 0, 1],
+                      [0, 1, 0, 1, 0, 1, 0],
+                      [1, 0, 1, 0, 1, 0, 1]]
+
+        # self.image = [[0, 1, 0],
+        #               [1, 0, 1],
+        #               [0, 1, 0]]
 
         # self.image = [[0, 1],
         #              [1, 0]]
