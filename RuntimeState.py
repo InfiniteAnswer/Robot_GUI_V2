@@ -39,8 +39,8 @@ class RuntimeState():
                            "cntrl_timeout": 1,
                            "gripper_open_wait": 0.25,
                            "gripper_close_wait": 0.4,
-                           "gripper_up": 30,
-                           "gripper_down_palette": 39.75,
+                           "gripper_up": 25,
+                           "gripper_down_palette": 40.25,
                            "gripper_down_table": 73.5,
                            "gripper_safety_height": 10,
                            "moving_timeout": 90}
@@ -52,7 +52,7 @@ class RuntimeState():
                             "palette_pitch": 30.48,
                             "tt_origin_x": 15,
                             "tt_origin_y": 15,
-                            "pal_origin_x": 45.5}
+                            "pal_origin_x": 44.5}
 
         self.pal_message = {"palHome": ":01060D001010CC\r\n",
                             "palSet_position_1": ":01060D030001E8\r\n",
