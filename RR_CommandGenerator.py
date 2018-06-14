@@ -9,7 +9,7 @@ def calcchecksum(message):
 
 def ttHome(station="99",
            axis="100",
-           search_speed=3,
+           search_speed=10,
            creep_speed=3):
     axis_bytes = format(eval("0b" + axis), '02x').upper()
     search_bytes = format(search_speed, '03x').upper()

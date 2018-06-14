@@ -41,7 +41,7 @@ class RuntimeState():
                            "gripper_close_wait": 0.4,
                            "gripper_up": 25,
                            "gripper_down_palette": 40.25,
-                           "gripper_down_table": 73.5,
+                           "gripper_down_table": 74, # was 73.5, changed to 74
                            "gripper_safety_height": 10,
                            "moving_timeout": 90}
 
@@ -52,7 +52,9 @@ class RuntimeState():
                             "palette_pitch": 30.48,
                             "tt_origin_x": 15,
                             "tt_origin_y": 15,
-                            "pal_origin_x": 44.5}
+                            "pal_origin_x": 44.5,
+                            "load_tray_ax1_pos": 390,
+                            "tray_home_ax1_pos": 10}
 
         self.pal_message = {"palHome": ":01060D001010CC\r\n",
                             "palSet_position_1": ":01060D030001E8\r\n",
@@ -183,6 +185,7 @@ class RuntimeState():
         while (self.tt_moving_query()):
             if self.printpause:
                 self.printpause_sequence()
+                timeout = time.time() + self.param_robo["moving_timeout"]
             if time.time() > timeout:
                 process_log += "WARNING! TT timed out. Unable to reach set-point after " + \
                                str(self.param_robo["moving_timeout"]) + " seconds\n"

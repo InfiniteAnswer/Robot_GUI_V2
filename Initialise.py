@@ -58,22 +58,38 @@ class Initialise():
         self.button_rehome_PAL.place(x=40, y=70)
 
         # create and define MAG2PAL_NEAR button
-        self.button_Mag2PAL_near = tk.Button(self.info_initialise, text="Move Chute to Gripper",
+        self.button_Mag2PAL_near = tk.Button(self.info_initialise, text="Chute 2 Grip",
                                              bg=background_clr, fg=foreground_clr,
                                              activebackground=active_bg_clr,
                                              font=button_font,
-                                             width=button_width,
+                                             width=int(button_width / 2) - 1,
                                              command=self.Mag2PAL_near)
         self.button_Mag2PAL_near.place(x=40, y=120)
 
         # create and define MAG2PAL_FAR button
-        self.button_Mag2PAL_far = tk.Button(self.info_initialise, text="Move Chute to Magazine",
+        self.button_Mag2PAL_far = tk.Button(self.info_initialise, text="Chute 2 Mag",
                                             bg=background_clr, fg=foreground_clr,
                                             activebackground=active_bg_clr,
                                             font=button_font,
-                                            width=button_width,
+                                            width=int(button_width / 2) - 1,
                                             command=self.Mag2PAL_far)
         self.button_Mag2PAL_far.place(x=40, y=170)
+
+        self.button_pause = tk.Button(self.info_initialise, text="Load Tray",
+                                      bg=background_clr, fg=foreground_clr,
+                                      activebackground=active_bg_clr,
+                                      font=button_font,
+                                      width=int(button_width / 2) - 1,
+                                      command=self.load_tray)
+        self.button_pause.place(x=440, y=120, anchor=tk.NE)
+
+        self.button_restart = tk.Button(self.info_initialise, text="Tray 2 Start",
+                                        bg=background_clr, fg=foreground_clr,
+                                        activebackground=active_bg_clr,
+                                        font=button_font,
+                                        width=int(button_width / 2) - 1,
+                                        command=self.tray_home)
+        self.button_restart.place(x=440, y=170, anchor=tk.NE)
 
         # create 8 entries for 8 cartridge mappings
         self.mapping_frame = tk.Frame(self.info_initialise, width=400, height=80, bg=background_clr, bd=2,
@@ -250,3 +266,14 @@ class Initialise():
         print(self.state.process_log.split("\n")[-2] + "\n")
         self.button_Mag2PAL_far.config(bg=active_bg_clr, fg=active_fg_clr)
         self.button_Mag2PAL_near.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+
+
+    def load_tray(self):
+        cmd = RR_CommandGenerator.ttMoveAbs(axis="001", axis1_pos=self.state.param_tiles["load_tray_ax1_pos"])
+        self.state.ttPort.write(cmd)
+        unused_response = self.state.ttPort.readline()
+
+    def tray_home(self):
+        cmd = RR_CommandGenerator.ttMoveAbs(axis="001", axis1_pos=self.state.param_tiles["tray_home_ax1_pos"])
+        self.state.ttPort.write(cmd)
+        unused_response = self.state.ttPort.readline()
