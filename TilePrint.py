@@ -101,21 +101,21 @@ class TilePrint():
         #         self.image.append(new_row)
 
         # OPTION 2: directly create 2 list of lists for the mosaic
-##        self.image = [[0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
-##                      [1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
-##                      [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
-##                      [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2],
-##                      [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
-##                      [1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
-##                      [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
-##                      [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2],
-##                      [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
-##                      [1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
-##                      [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
-##                      [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]]
+        self.image = [[0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
+                      [1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
+                      [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
+                      [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2],
+                      [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
+                      [1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
+                      [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
+                      [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2],
+                      [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
+                      [1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
+                      [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
+                      [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]]
 
-        self.image = [[2, 2, 2, 2, 2],
-                      [2, 2, 2, 2, 2]]
+##        self.image = [[2, 2, 2, 2, 2],
+##                      [2, 2, 2, 2, 2]]
 
         # self.image = [[0, 1, 0],
         #               [1, 0, 1],
@@ -157,6 +157,8 @@ class TilePrint():
             self.state.printing = True
             th = Thread(target=self.start_sequence)
             th.start()
+            th_error_server = Thread(target=self.error_server)
+            th_error_server.start()
             self.info_tileprint.focus_set()
             self.info_tileprint.grab_set()
 
@@ -448,3 +450,33 @@ class TilePrint():
         self.button_restart.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
         self.info_tileprint.grab_release()
         self.state.printing = False
+
+
+    def error_server(self):
+        msg=""
+        time.sleep(1)
+        self.state.cntrlPort.flushOutput()
+        while True:
+            #c = c+self.state.cntrlPort.read().decode("utf-8")
+            c=self.state.cntrlPort.read()
+            try:
+                c_decoded = c.decode("utf-8")
+                msg += c_decoded
+                #print("raw: ", c)
+                #print("decoded: ", c.decode("utf-8"))
+                if c==b'':
+                    time.sleep(1)
+                #else:
+                 #   print(c, end='')
+                if c==b'\n':
+                    print("Error message starting")
+                    print(msg)
+                    print("Error message ended")
+                    if msg[:3] == "mf0":
+                        self.state.printpause = True
+                        self.button_pause.config(bg=active_bg_clr, fg=active_fg_clr)
+                        self.button_start.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+                        self.button_restart.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+                    msg=""
+            except:
+                pass
