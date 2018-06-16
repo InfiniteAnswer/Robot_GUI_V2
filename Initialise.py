@@ -221,59 +221,67 @@ class Initialise():
 
 
     def Mag2PAL_near(self):
-        # move palette away from gripper
-        cmd = self.state.pal_message["palSet_position_1"].encode("ascii")
-        self.state.palPort.write(cmd)
-        unused_response = self.state.palPort.readline()
-        cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
-        self.state.palPort.write(cmd)
-        unused_response = self.state.palPort.readline()
-        cmd = self.state.pal_message["palCSTR_on"].encode("ascii")
-        self.state.palPort.write(cmd)
-        unused_response = self.state.palPort.readline()
-        cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
-        self.state.palPort.write(cmd)
-        unused_response = self.state.palPort.readline()
-        self.state.process_log += self.state.timestamped_msg("palette moved to position 2\n")
-        print(self.state.process_log.split("\n")[-2] + "\n")
-        # moving?
-        self.state.tt_pal_moving()
-        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
-        print(self.state.process_log.split("\n")[-2] + "\n")
-        self.button_Mag2PAL_near.config(bg=active_bg_clr, fg=active_fg_clr)
-        self.button_Mag2PAL_far.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+        if (self.state.all_axes_homed and not self.state.printing) or (
+                self.state.all_axes_homed and self.state.printpause):
+            # move palette away from gripper
+            cmd = self.state.pal_message["palSet_position_1"].encode("ascii")
+            self.state.palPort.write(cmd)
+            unused_response = self.state.palPort.readline()
+            cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
+            self.state.palPort.write(cmd)
+            unused_response = self.state.palPort.readline()
+            cmd = self.state.pal_message["palCSTR_on"].encode("ascii")
+            self.state.palPort.write(cmd)
+            unused_response = self.state.palPort.readline()
+            cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
+            self.state.palPort.write(cmd)
+            unused_response = self.state.palPort.readline()
+            self.state.process_log += self.state.timestamped_msg("palette moved to position 2\n")
+            print(self.state.process_log.split("\n")[-2] + "\n")
+            # moving?
+            self.state.tt_pal_moving()
+            self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
+            print(self.state.process_log.split("\n")[-2] + "\n")
+            self.button_Mag2PAL_near.config(bg=active_bg_clr, fg=active_fg_clr)
+            self.button_Mag2PAL_far.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
 
 
     def Mag2PAL_far(self):
-        # move palette away from gripper
-        cmd = self.state.pal_message["palSet_position_2"].encode("ascii")
-        self.state.palPort.write(cmd)
-        unused_response = self.state.palPort.readline()
-        cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
-        self.state.palPort.write(cmd)
-        unused_response = self.state.palPort.readline()
-        cmd = self.state.pal_message["palCSTR_on"].encode("ascii")
-        self.state.palPort.write(cmd)
-        unused_response = self.state.palPort.readline()
-        cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
-        self.state.palPort.write(cmd)
-        unused_response = self.state.palPort.readline()
-        self.state.process_log += self.state.timestamped_msg("palette moved to position 2\n")
-        print(self.state.process_log.split("\n")[-2] + "\n")
-        # moving?
-        self.state.tt_pal_moving()
-        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
-        print(self.state.process_log.split("\n")[-2] + "\n")
-        self.button_Mag2PAL_far.config(bg=active_bg_clr, fg=active_fg_clr)
-        self.button_Mag2PAL_near.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+        if (self.state.all_axes_homed and not self.state.printing) or (
+                self.state.all_axes_homed and self.state.printpause):
+            # move palette away from gripper
+            cmd = self.state.pal_message["palSet_position_2"].encode("ascii")
+            self.state.palPort.write(cmd)
+            unused_response = self.state.palPort.readline()
+            cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
+            self.state.palPort.write(cmd)
+            unused_response = self.state.palPort.readline()
+            cmd = self.state.pal_message["palCSTR_on"].encode("ascii")
+            self.state.palPort.write(cmd)
+            unused_response = self.state.palPort.readline()
+            cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
+            self.state.palPort.write(cmd)
+            unused_response = self.state.palPort.readline()
+            self.state.process_log += self.state.timestamped_msg("palette moved to position 2\n")
+            print(self.state.process_log.split("\n")[-2] + "\n")
+            # moving?
+            self.state.tt_pal_moving()
+            self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
+            print(self.state.process_log.split("\n")[-2] + "\n")
+            self.button_Mag2PAL_far.config(bg=active_bg_clr, fg=active_fg_clr)
+            self.button_Mag2PAL_near.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
 
 
     def load_tray(self):
-        cmd = RR_CommandGenerator.ttMoveAbs(axis="001", axis1_pos=self.state.param_tiles["load_tray_ax1_pos"])
-        self.state.ttPort.write(cmd)
-        unused_response = self.state.ttPort.readline()
+        if (self.state.all_axes_homed and not self.state.printing) or (
+                self.state.all_axes_homed and self.state.printpause):
+            cmd = RR_CommandGenerator.ttMoveAbs(axis="001", axis1_pos=self.state.param_tiles["load_tray_ax1_pos"])
+            self.state.ttPort.write(cmd)
+            unused_response = self.state.ttPort.readline()
 
     def tray_home(self):
-        cmd = RR_CommandGenerator.ttMoveAbs(axis="001", axis1_pos=self.state.param_tiles["tray_home_ax1_pos"])
-        self.state.ttPort.write(cmd)
-        unused_response = self.state.ttPort.readline()
+        if (self.state.all_axes_homed and not self.state.printing) or (
+                self.state.all_axes_homed and self.state.printpause):
+            cmd = RR_CommandGenerator.ttMoveAbs(axis="001", axis1_pos=self.state.param_tiles["tray_home_ax1_pos"])
+            self.state.ttPort.write(cmd)
+            unused_response = self.state.ttPort.readline()

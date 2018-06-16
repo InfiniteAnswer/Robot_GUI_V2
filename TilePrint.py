@@ -147,7 +147,7 @@ class TilePrint():
         self.state.printSpeed = self.print_speed.get()
 
     def start_callback(self):
-        if (self.image_loaded and not self.state.printing):
+        if (self.image_loaded and not self.state.printing and self.state.all_axes_homed):
             self.button_start.config(bg=active_bg_clr, fg=active_fg_clr)
 
             # grab focus on current window to ensure any key press is caught as an event
@@ -469,10 +469,12 @@ class TilePrint():
                 #else:
                  #   print(c, end='')
                 if c==b'\n':
-                    print("Error message starting")
-                    print(msg)
-                    print("Error message ended")
+                    # print("Error message starting")
+                    # print(msg)
+                    # print("Error message ended")
                     if msg[:3] == "mf0":
+                        self.state.process_log += self.state.timestamped_msg("paused because of empty cartridge\n")
+                        print(self.state.process_log.split("\n")[-2] + "\n")
                         self.state.printpause = True
                         self.button_pause.config(bg=active_bg_clr, fg=active_fg_clr)
                         self.button_start.config(bg=inactive_bg_clr, fg=inactive_fg_clr)

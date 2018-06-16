@@ -232,3 +232,7 @@ class RuntimeState():
         string = str(time.asctime(time.localtime(time.time()))) + ": " + msg
         return (string)
 
+
+    def all_axes_homed(self):
+        answer = self.homeax1 and self.homeax2 and self.homeax3 and self.homeax4
+        return answer
