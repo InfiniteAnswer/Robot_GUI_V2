@@ -41,7 +41,7 @@ class TilePrint():
                                          bg=inactive_bg_clr, fg=inactive_fg_clr,
                                          activebackground=active_bg_clr,
                                          font=button_font,
-                                         width=button_width,
+                                         width=int(button_width / 2) - 1,
                                          command=self.loadfile_callback)
         self.button_loadfile.place(x=40, y=20)
 
@@ -49,9 +49,9 @@ class TilePrint():
                                       bg=inactive_bg_clr, fg=inactive_fg_clr,
                                       activebackground=active_bg_clr,
                                       font=button_font,
-                                      width=button_width,
+                                      width=int(button_width / 2) - 1,
                                       command=self.start_callback)
-        self.button_start.place(x=40, y=70)
+        self.button_start.place(x=440, y=20, anchor=tk.NE)
 
         self.button_pause = tk.Button(self.info_tileprint, text="Pause",
                                       bg=background_clr, fg=foreground_clr,
@@ -59,7 +59,7 @@ class TilePrint():
                                       font=button_font,
                                       width=int(button_width / 2) - 1,
                                       command=self.pause_callback)
-        self.button_pause.place(x=40, y=120)
+        self.button_pause.place(x=40, y=70)
 
         self.button_restart = tk.Button(self.info_tileprint, text="Restart",
                                         bg=background_clr, fg=foreground_clr,
@@ -67,13 +67,30 @@ class TilePrint():
                                         font=button_font,
                                         width=int(button_width / 2) - 1,
                                         command=self.restart_callback)
-        self.button_restart.place(x=440, y=120, anchor=tk.NE)
+        self.button_restart.place(x=440, y=70, anchor=tk.NE)
+
+        self.button_pal2grip = tk.Button(self.info_tileprint, text="Pal2Grip",
+                                         bg=background_clr, fg=foreground_clr,
+                                         activebackground=active_bg_clr,
+                                         font=button_font,
+                                         width=int(button_width / 2) - 1,
+                                         command=self.pal2grip_callback)
+        self.button_pal2grip.place(x=40, y=120)
+
+        self.button_pal2mag = tk.Button(self.info_tileprint, text="Pal2Mag",
+                                        bg=background_clr, fg=foreground_clr,
+                                        activebackground=active_bg_clr,
+                                        font=button_font,
+                                        width=int(button_width / 2) - 1,
+                                        command=self.pal2mag_callback)
+        self.button_pal2mag.place(x=440, y=120, anchor=tk.NE)
 
         self.button_abort = tk.Button(self.info_tileprint, text="Abort",
                                       bg=background_clr, fg=foreground_clr,
                                       activebackground=active_bg_clr,
                                       font=button_font,
-                                      width=button_width)
+                                      width=button_width,
+                                      command=self.abort_callback)
         self.button_abort.place(x=40, y=170)
 
         self.print_speed = tk.Scale(self.info_tileprint, from_=10, to=100, resolution=10, orient=tk.HORIZONTAL,
@@ -85,6 +102,9 @@ class TilePrint():
         self.filename = ""
         self.image = []
         self.image_loaded = False
+
+        th_error_server = Thread(target=self.error_server)
+        th_error_server.start()
 
         self.info_tileprint.bind("<KeyPress>", self.keypress_callback)
 
@@ -114,8 +134,8 @@ class TilePrint():
                       [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
                       [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]]
 
-##        self.image = [[2, 2, 2, 2, 2],
-##                      [2, 2, 2, 2, 2]]
+        ##        self.image = [[2, 2, 2, 2, 2],
+        ##                      [2, 2, 2, 2, 2]]
 
         # self.image = [[0, 1, 0],
         #               [1, 0, 1],
@@ -157,8 +177,8 @@ class TilePrint():
             self.state.printing = True
             th = Thread(target=self.start_sequence)
             th.start()
-            th_error_server = Thread(target=self.error_server)
-            th_error_server.start()
+            ##            th_error_server = Thread(target=self.error_server)
+            ##            th_error_server.start()
             self.info_tileprint.focus_set()
             self.info_tileprint.grab_set()
 
@@ -171,13 +191,41 @@ class TilePrint():
 
     def restart_callback(self):
         if self.state.printpause:
-            self.state.printpause = False
             self.button_pause.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
             self.button_start.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
             self.button_restart.config(bg=active_bg_clr, fg=active_fg_clr)
+            if self.state.printing:
+                self.state.recovery_initiated = True
+                self.move_last_commanded_xyz()
 
     def abort_callback(self):
-        pass
+        # only possible from printpause state
+        if self.state.printpause:
+            # add log message to say aborted
+            self.state.process_log += self.state.timestamped_msg("print job aborted\n")
+            print(self.state.process_log.split("\n")[-2] + "\n")
+
+            # change state to not printing
+            # add log message to say lock parameters are reset
+            self.state.printing = False
+            sleep(0.5)
+            self.state.printpause = False
+
+    def pal2grip_callback(self):
+        if self.state.printpause:
+            self.state.palette_motion_during_printpause = True
+            time.sleep(0.25)
+            self.palette_to_gripper()
+            time.sleep(1)
+            self.state.palette_motion_during_printpause = False
+
+    def pal2mag_callback(self):
+        if self.state.printpause:
+            self.state.palette_motion_during_printpause = True
+            time.sleep(0.25)
+            self.palette_to_magazine()
+            time.sleep(1)
+            self.state.palette_motion_during_printpause = False
 
     def keypress_callback(self, e):
         print("KEY PRESSED")
@@ -185,82 +233,29 @@ class TilePrint():
             self.pause_callback()
 
     def start_sequence(self):
-        # gripper up
-        # gripper wide open
-        # pal under gripper
-        # gripper over to pal pickup position
-        # gripper down to pal
-        # gripper close
-        # gripper up
-        # pal back to reload
-        # gripper over to table dropoff position
-        # gripper down
-        # gripper open
-        # gripper shuffle
-        # REPEAT
-
         image_rows = len(self.image)
         image_cols = len(self.image[0])
 
-        # add tile number to log file
+        # add tile section number to log file
         self.state.process_log += "Sequence for mosaic: " + str(self.state.mosaic_number) + "\n"
         print(self.state.process_log.split("\n")[-2])
 
         # gripper up
-        self.state.ttPort.write(
-            RR_CommandGenerator.ttMoveAbs(axis="100",
-                                          speed=int(self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
-                                          axis3_pos=self.state.param_robo["gripper_up"]))
-        self.state.last_commanded_ax3 = self.state.param_robo["gripper_up"]
-        unused_response = self.state.ttPort.readline()
-        self.state.process_log += self.state.timestamped_msg("gripper up\n")
-        print(self.state.process_log.split("\n")[-2])
+        if self.state.printing:
+            self.gripper_to_safety_height()
 
-        # moving?
-        self.state.tt_pal_moving()
-        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
-        print(self.state.process_log.split("\n")[-2])
-
-        # open gripper
-        ##    self.state.ttPort.write(RR_CommandGenerator.ttOutputPortSet(on="1"))
-        ##    unused_response = self.state.ttPort.readline()
-        ##    self.state.ttPort.write(RR_CommandGenerator.ttOutputPortSet(on="1", port="013E"))
-        ##    unused_response = self.state.ttPort.readline()
-        for i in range(3):
-            self.state.cntrlPort.write(b"mgw$")
-            time.sleep(0.5)
-            self.state.cntrlPort.write(b"mgo$")
-            time.sleep(0.5)
-            self.state.cntrlPort.write(b"mgc$")
-            time.sleep(0.5)
-        time.sleep(1)
-        self.state.cntrlPort.write(b"mgw$")
-        # wait
-        time.sleep(self.state.param_robo["gripper_open_wait"])
-        self.state.process_log += self.state.timestamped_msg("gripper opened, paused: ") + \
-                                  str(self.state.param_robo["gripper_open_wait"]) + "seconds\n"
-        print(self.state.process_log.split("\n")[-2] + "\n")
-        # nons=input("press enter")
+        # gripper startup routine, ending in wide open gripper
+        self.gripper_startup_routine()
 
         for row_i, row in enumerate(self.image):
             x, y = self.state.pixel2table(0, row_i)
 
             # move to next table row position
-            self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="001",
-                                                                  speed=int(
-                                                                      self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
-                                                                  axis1_pos=y))
-            self.state.last_commanded_ax1 = y
-            unused_response = self.state.ttPort.readline()
-            self.state.process_log += self.state.timestamped_msg("tt moved to row: ") + str(row_i) + "\n"
-            print(self.state.process_log.split("\n")[-2])
-            # moving?
-            self.state.tt_moving()
-            self.state.process_log += self.state.timestamped_msg("tt robot finished moving\n")
-            print(self.state.process_log.split("\n")[-2] + "\n")
+            if self.execute_next_command():
+                self.move_axis1(y, row_i)
 
             for col_i, col in enumerate(row):
-                # Add tile number to log
+                # Add tile row number to log
                 self.state.process_log += "Sequence for tile row: " + str(row_i) + " column: " + str(col_i) + "\n"
                 print("\n\n-------------------------------------------------\n")
                 print(self.state.process_log.split("\n")[-2] + "\n")
@@ -269,206 +264,75 @@ class TilePrint():
                 c = self.state.colour2palette(self.image[row_i][col_i])
 
                 # move to next colour palette position
-                self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="010",
-                                                                      speed=int(
-                                                                          self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
-                                                                      axis2_pos=c))
-                self.state.last_commanded_ax2 = c
-                unused_response = self.state.ttPort.readline()
-                self.state.process_log += self.state.timestamped_msg("tt moved to colour: ") + \
-                                          str(self.image[row_i][col_i]) + \
-                                          " (axis 2 = " + str(c) + ")\n"
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # nons=input("press enter")
+                if self.execute_next_command():
+                    self.move_axis2_colour(c, row_i, col_i)
+
                 # move palette under gripper
-                cmd = self.state.pal_message["palSet_position_1"].encode("ascii")
-                self.state.palPort.write(cmd)
-                unused_response = self.state.palPort.readline()
-                cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
-                self.state.palPort.write(cmd)
-                unused_response = self.state.palPort.readline()
-                cmd = self.state.pal_message["palCSTR_on"].encode("ascii")
-                self.state.palPort.write(cmd)
-                unused_response = self.state.palPort.readline()
-                cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
-                self.state.palPort.write(cmd)
-                unused_response = self.state.palPort.readline()
-                self.state.process_log += self.state.timestamped_msg("palette moved to position 1\n")
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # moving?
-                self.state.tt_pal_moving()
-                self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # nons=input("press enter")
+                if self.execute_next_command():
+                    self.state.last_commanded_ax4 = 1
+                    self.palette_to_gripper()
 
                 # move gripper down to palette
-                self.state.ttPort.write(
-                    RR_CommandGenerator.ttMoveAbs(axis="100",
-                                                  speed=int(self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
-                                                  axis3_pos=self.state.param_robo["gripper_down_palette"]))
-                self.state.last_commanded_ax3 = self.state.param_robo["gripper_down_palette"]
-                unused_response = self.state.ttPort.readline()
-                self.state.process_log += self.state.timestamped_msg("gripper down to palette\n")
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # moving?
-                self.state.tt_pal_moving()
-                self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # nons=input("press enter")
+                if self.execute_next_command():
+                    self.gripper_to_palette()
 
                 # close gripper
-                ##            self.state.ttPort.write(RR_CommandGenerator.ttOutputPortSet(on="0"))
-                ##            unused_response = self.state.ttPort.readline()
-                ##            self.state.ttPort.write(RR_CommandGenerator.ttOutputPortSet(on="0", port="013E"))
-                ##            unused_response = self.state.ttPort.readline()
-                self.state.cntrlPort.write(b"mgc$")
-                # wait
-                time.sleep(self.state.param_robo["gripper_open_wait"])
-                self.state.process_log += self.state.timestamped_msg("gripper closed, paused: ") + str(
-                    self.state.param_robo["gripper_open_wait"]) + "seconds\n"
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # nons=input("press enter")
+                if self.execute_next_command():
+                    self.close_gripper()
 
                 # move gripper up
-                self.state.ttPort.write(
-                    RR_CommandGenerator.ttMoveAbs(axis="100",
-                                                  speed=int(self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
-                                                  axis3_pos=self.state.param_robo["gripper_up"]))
-                self.state.last_commanded_ax3 = self.state.param_robo["gripper_up"]
-                unused_response = self.state.ttPort.readline()
-                self.state.process_log += self.state.timestamped_msg("gripper up\n")
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # moving?
-                self.state.tt_pal_moving()
-                self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # nons=input("press enter")
+                if self.execute_next_command():
+                    self.gripper_to_safety_height()
 
                 # move palette away from gripper
-                cmd = self.state.pal_message["palSet_position_2"].encode("ascii")
-                self.state.palPort.write(cmd)
-                unused_response = self.state.palPort.readline()
-                cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
-                self.state.palPort.write(cmd)
-                unused_response = self.state.palPort.readline()
-                cmd = self.state.pal_message["palCSTR_on"].encode("ascii")
-                self.state.palPort.write(cmd)
-                unused_response = self.state.palPort.readline()
-                cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
-                self.state.palPort.write(cmd)
-                unused_response = self.state.palPort.readline()
-                self.state.process_log += self.state.timestamped_msg("palette moved to position 2\n")
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # moving?
-                self.state.tt_pal_moving()
-                self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # nons=input("press enter")
+                if self.execute_next_command():
+                    self.state.last_commanded_ax4 = 2
+                    self.palette_to_magazine()
 
                 # move gripper to selected column
-                self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="010",
-                                                                      speed=int(
-                                                                          self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
-                                                                      axis2_pos=x))
-                self.state.last_commanded_ax2 = x
-                unused_response = self.state.ttPort.readline()
-                self.state.process_log += self.state.timestamped_msg("tt moved to table tile: ") + str(
-                    col_i) + " (axis 2 = " + str(x) + ")\n"
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # moving?
-                self.state.tt_pal_moving()
-                self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # nons=input("press enter")
+                if self.execute_next_command():
+                    self.move_axis2_column(x, col_i)
 
                 # move gripper down to table
-                self.state.ttPort.write(
-                    RR_CommandGenerator.ttMoveAbs(axis="100",
-                                                  speed=int(self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
-                                                  axis3_pos=self.state.param_robo["gripper_down_table"]))
-                self.state.last_commanded_ax3 = self.state.param_robo["gripper_down_table"]
-                unused_response = self.state.ttPort.readline()
-                self.state.process_log += self.state.timestamped_msg("gripper down to table\n")
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # moving?
-                self.state.tt_pal_moving()
-                self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # nons=input("press enter")
+                if self.execute_next_command():
+                    self.gripper_to_table()
 
                 # open gripper
-                ##            self.state.ttPort.write(RR_CommandGenerator.ttOutputPortSet(on="1"))
-                ##            unused_response = self.state.ttPort.readline()
-                ##            self.state.ttPort.write(RR_CommandGenerator.ttOutputPortSet(on="0", port="013E"))
-                ##            unused_response = self.state.ttPort.readline()
-                self.state.cntrlPort.write(b"mgo$")
-                # wait
-                time.sleep(self.state.param_robo["gripper_open_wait"])
-                self.state.process_log += self.state.timestamped_msg("gripper opened, paused: ") + str(
-                    self.state.param_robo["gripper_open_wait"]) + "seconds\n"
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # nons=input("press enter")
-
-                # move gripper to selected column + 0.25mm to left
-                # self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="010", axis2_pos=(x + 0.25)))
-                # unused_response = self.state.ttPort.readline()
-                # self.state.process_log += self.state.timestamped_msg("tt moved to left by 0.25mm\n")
-                # print(self.state.process_log.split("\n")[-2] + "\n")
-                # # moving?
-                # self.state.tt_pal_moving()
-                # self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
-                # print(self.state.process_log.split("\n")[-2] + "\n")
-                # # nons=input("press enter")
+                if self.execute_next_command():
+                    self.open_gripper()
 
                 # move gripper up
-                self.state.ttPort.write(
-                    RR_CommandGenerator.ttMoveAbs(axis="100",
-                                                  speed=int(self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
-                                                  axis3_pos=self.state.param_robo["gripper_up"]))
-                self.state.last_commanded_ax3 = self.state.param_robo["gripper_up"]
-                unused_response = self.state.ttPort.readline()
-                self.state.process_log += self.state.timestamped_msg("gripper up\n")
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # moving?
-                self.state.tt_pal_moving()
-                self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
-                print(self.state.process_log.split("\n")[-2] + "\n")
-                # nons=input("press enter")
+                if self.execute_next_command():
+                    self.gripper_to_safety_height()
 
-                # open gripper
-                ##            self.state.ttPort.write(RR_CommandGenerator.ttOutputPortSet(on="1"))
-                ##            unused_response = self.state.ttPort.readline()
-                ##            self.state.ttPort.write(RR_CommandGenerator.ttOutputPortSet(on="1", port="013E"))
-                ##            unused_response = self.state.ttPort.readline()
-                self.state.cntrlPort.write(b"mgw$")
-                # wait
-                # time.sleep(self.state.param_robo["gripper_open_wait"])
-                self.state.process_log += self.state.timestamped_msg("gripper opened, paused: ") + str(
-                    self.state.param_robo["gripper_open_wait"]) + "seconds\n"
-                print(self.state.process_log.split("\n")[-2] + "\n")
+                # open gripper wide
+                if self.execute_next_command():
+                    self.open_gripper_wide()
+
         self.button_start.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+        self.button_pause.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
         self.button_restart.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
         self.info_tileprint.grab_release()
         self.state.printing = False
-
+        print("JOB COMPLETE!")
 
     def error_server(self):
-        msg=""
+        msg = ""
         time.sleep(1)
         self.state.cntrlPort.flushOutput()
         while True:
-            #c = c+self.state.cntrlPort.read().decode("utf-8")
-            c=self.state.cntrlPort.read()
+            # c = c+self.state.cntrlPort.read().decode("utf-8")
+            c = self.state.cntrlPort.read()
             try:
                 c_decoded = c.decode("utf-8")
                 msg += c_decoded
-                #print("raw: ", c)
-                #print("decoded: ", c.decode("utf-8"))
-                if c==b'':
+                # print("raw: ", c)
+                # print("decoded: ", c.decode("utf-8"))
+                if c == b'':
                     time.sleep(1)
-                #else:
-                 #   print(c, end='')
-                if c==b'\n':
+                # else:
+                #   print(c, end='')
+                if c == b'\n':
                     # print("Error message starting")
                     # print(msg)
                     # print("Error message ended")
@@ -479,6 +343,216 @@ class TilePrint():
                         self.button_pause.config(bg=active_bg_clr, fg=active_fg_clr)
                         self.button_start.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
                         self.button_restart.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
-                    msg=""
+                    msg = ""
             except:
                 pass
+
+    def gripper_startup_routine(self):
+        for i in range(3):
+            self.state.cntrlPort.write(b"mgw$")
+            time.sleep(0.5)
+            self.state.cntrlPort.write(b"mgo$")
+            time.sleep(0.5)
+            self.state.cntrlPort.write(b"mgc$")
+            time.sleep(0.5)
+        time.sleep(1)
+        self.state.cntrlPort.write(b"mgw$")
+        time.sleep(self.state.param_robo["gripper_open_wait"])
+        self.state.process_log += self.state.timestamped_msg("gripper opened, paused: ") + \
+                                  str(self.state.param_robo["gripper_open_wait"]) + "seconds\n"
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        self.state.process_log += self.state.timestamped_msg("gripper startup sequence complete\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+
+    def move_axis1(self, y, row_i):
+        self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="001",
+                                                              speed=int(
+                                                                  self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                                              axis1_pos=y))
+        self.state.last_commanded_ax1 = y
+        unused_response = self.state.ttPort.readline()
+        self.state.process_log += self.state.timestamped_msg("tt moved to row: ") + str(row_i) + "\n"
+        print(self.state.process_log.split("\n")[-2])
+        # moving?
+        self.state.tt_moving()
+        self.state.process_log += self.state.timestamped_msg("tt robot finished moving\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+
+    def move_axis2_colour(self, c, row_i, col_i):
+        self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="010",
+                                                              speed=int(
+                                                                  self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                                              axis2_pos=c))
+        self.state.last_commanded_ax2 = c
+        unused_response = self.state.ttPort.readline()
+        self.state.process_log += self.state.timestamped_msg("tt moved to colour: ") + \
+                                  str(self.image[row_i][col_i]) + \
+                                  " (axis 2 = " + str(c) + ")\n"
+        print(self.state.process_log.split("\n")[-2] + "\n")
+
+    def move_axis2_column(self, x, col_i):
+        self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="010",
+                                                              speed=int(
+                                                                  self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                                              axis2_pos=x))
+        self.state.last_commanded_ax2 = x
+        unused_response = self.state.ttPort.readline()
+        self.state.process_log += self.state.timestamped_msg("tt moved to table tile: ") + str(
+            col_i) + " (axis 2 = " + str(x) + ")\n"
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        # moving?
+        self.state.tt_pal_moving()
+        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+
+    def move_last_commanded_xyz(self):
+        # goto last pal position
+        if self.state.last_commanded_ax4 == 1:
+            self.palette_to_gripper()
+        if self.state.last_commanded_ax4 == 2:
+            self.palette_to_magazine()
+
+        # goto last x position
+        self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="001", axis1_pos=self.state.last_commanded_ax1))
+        unused_response = self.state.ttPort.readline()
+        self.state.process_log += self.state.timestamped_msg("returning ax1-table to last commanded position\n")
+        print(self.state.process_log.split("\n")[-2])
+        # moving?
+        self.state.tt_pal_moving()
+        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+
+        # goto last y position
+        self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="010", axis2_pos=self.state.last_commanded_ax2))
+        unused_response = self.state.ttPort.readline()
+        self.state.process_log += self.state.timestamped_msg("returning ax2-bridge to last commanded position\n")
+        print(self.state.process_log.split("\n")[-2])
+        # moving?
+        self.state.tt_pal_moving()
+        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+
+        # goto last z position
+        self.state.ttPort.write(RR_CommandGenerator.ttMoveAbs(axis="100", axis3_pos=self.state.last_commanded_ax3))
+        unused_response = self.state.ttPort.readline()
+        self.state.process_log += self.state.timestamped_msg("returning ax3-gripper to last commanded position\n")
+        print(self.state.process_log.split("\n")[-2])
+        # moving?
+        self.state.tt_pal_moving()
+        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+
+        self.state.recovery_initiated = False
+        self.state.printpause = False
+
+    def palette_to_gripper(self):
+        cmd = self.state.pal_message["palSet_position_1"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        cmd = self.state.pal_message["palCSTR_on"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        self.state.process_log += self.state.timestamped_msg("palette moved to position 1\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        # moving?
+        self.state.tt_pal_moving()
+        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        self.button_pal2grip.config(bg=active_bg_clr, fg=active_fg_clr)
+        self.button_pal2mag.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+
+    def palette_to_magazine(self):
+        cmd = self.state.pal_message["palSet_position_2"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        cmd = self.state.pal_message["palCSTR_on"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        cmd = self.state.pal_message["palCSTR_off"].encode("ascii")
+        self.state.palPort.write(cmd)
+        unused_response = self.state.palPort.readline()
+        self.state.process_log += self.state.timestamped_msg("palette moved to position 2\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        # moving?
+        self.state.tt_pal_moving()
+        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        self.button_pal2mag.config(bg=active_bg_clr, fg=active_fg_clr)
+        self.button_pal2grip.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+
+    def gripper_to_palette(self):
+        self.state.ttPort.write(
+            RR_CommandGenerator.ttMoveAbs(axis="100",
+                                          speed=int(self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                          axis3_pos=self.state.param_robo["gripper_down_palette"]))
+        self.state.last_commanded_ax3 = self.state.param_robo["gripper_down_palette"]
+        unused_response = self.state.ttPort.readline()
+        self.state.process_log += self.state.timestamped_msg("gripper down to palette\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        # moving?
+        self.state.tt_pal_moving()
+        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+
+    def gripper_to_safety_height(self):
+        self.state.ttPort.write(
+            RR_CommandGenerator.ttMoveAbs(axis="100",
+                                          speed=int(self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                          axis3_pos=self.state.param_robo["gripper_up"]))
+        self.state.last_commanded_ax3 = self.state.param_robo["gripper_up"]
+        unused_response = self.state.ttPort.readline()
+        self.state.process_log += self.state.timestamped_msg("gripper up\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        # moving?
+        self.state.tt_pal_moving()
+        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+
+    def gripper_to_table(self):
+        self.state.ttPort.write(
+            RR_CommandGenerator.ttMoveAbs(axis="100",
+                                          speed=int(self.state.maxTTmovingSpeed / 100 * self.state.printSpeed),
+                                          axis3_pos=self.state.param_robo["gripper_down_table"]))
+        self.state.last_commanded_ax3 = self.state.param_robo["gripper_down_table"]
+        unused_response = self.state.ttPort.readline()
+        self.state.process_log += self.state.timestamped_msg("gripper down to table\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        # moving?
+        self.state.tt_pal_moving()
+        self.state.process_log += self.state.timestamped_msg("both robots finished moving\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+
+    def close_gripper(self):
+        self.state.cntrlPort.write(b"mgc$")
+        time.sleep(self.state.param_robo["gripper_open_wait"])
+        self.state.process_log += self.state.timestamped_msg("gripper closed, paused: ") + str(
+            self.state.param_robo["gripper_open_wait"]) + "seconds\n"
+        print(self.state.process_log.split("\n")[-2] + "\n")
+
+    def open_gripper(self):
+        self.state.cntrlPort.write(b"mgo$")
+        time.sleep(self.state.param_robo["gripper_open_wait"])
+        self.state.process_log += self.state.timestamped_msg("gripper opened, paused: ") + str(
+            self.state.param_robo["gripper_open_wait"]) + "seconds\n"
+        print(self.state.process_log.split("\n")[-2] + "\n")
+
+    def open_gripper_wide(self):
+        self.state.cntrlPort.write(b"mgw$")
+        time.sleep(self.state.param_robo["gripper_open_wait"])
+        self.state.process_log += self.state.timestamped_msg("gripper opened wide, paused: ") + str(
+            self.state.param_robo["gripper_open_wait"]) + "seconds\n"
+        print(self.state.process_log.split("\n")[-2] + "\n")
+
+    def execute_next_command(self):
+        while self.state.printpause:
+            sleep(self.state.POLLING_DELAY)
+        return self.state.printing

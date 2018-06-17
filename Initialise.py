@@ -108,7 +108,6 @@ class Initialise():
             self.cartridge_label_mapping[i].place(x=140 + i * 30, y=0)
             self.cartridge_label_mapping_entry[i].place(x=140 + i * 30, y=33)
 
-
     def rehome_TT_callback(self):
         # check if axes of tt are homed
         cmd = RR_CommandGenerator.ttMovingQuery(axis="001")
@@ -186,7 +185,6 @@ class Initialise():
         self.rehome_TT_button_bkclr = "green" if self.rehome_TT_button_state else "red"
         self.button_rehome_TT.config(bg=self.rehome_TT_button_bkclr)
 
-
     def rehome_PAL_callback(self):
         # check to see if PAL is homed
         cmd = self.state.pal_message["palQuery_home"].encode("ascii")
@@ -196,7 +194,7 @@ class Initialise():
         pal = (eval(response_pal) & 0b01) == 1
 
         # if PAL is not homed, perform home operation
-        if not(pal):
+        if not (pal):
             self.state.process_log += self.state.timestamped_msg("executing PAL home...\n")
             print(self.state.process_log.split("\n")[-2])
             cmd = self.state.pal_message["palHome"].encode("ascii")
@@ -218,7 +216,6 @@ class Initialise():
 
         self.rehome_PAL_button_bkclr = "green" if self.rehome_PAL_button_state else "red"
         self.button_rehome_PAL.config(bg=self.rehome_PAL_button_bkclr)
-
 
     def Mag2PAL_near(self):
         if (self.state.all_axes_homed and not self.state.printing) or (
@@ -245,7 +242,6 @@ class Initialise():
             self.button_Mag2PAL_near.config(bg=active_bg_clr, fg=active_fg_clr)
             self.button_Mag2PAL_far.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
 
-
     def Mag2PAL_far(self):
         if (self.state.all_axes_homed and not self.state.printing) or (
                 self.state.all_axes_homed and self.state.printpause):
@@ -270,7 +266,6 @@ class Initialise():
             print(self.state.process_log.split("\n")[-2] + "\n")
             self.button_Mag2PAL_far.config(bg=active_bg_clr, fg=active_fg_clr)
             self.button_Mag2PAL_near.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
-
 
     def load_tray(self):
         if (self.state.all_axes_homed and not self.state.printing) or (
