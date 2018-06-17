@@ -314,7 +314,22 @@ class TilePrint():
         self.button_restart.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
         self.info_tileprint.grab_release()
         self.state.printing = False
-        print("JOB COMPLETE!")
+        self.state.process_log += self.state.timestamped_msg("JOB COMPLETE!\n")
+        print(self.state.process_log.split("\n")[-2] + "\n")
+        # save log file
+        self.state.process_log += self.state.timestamped_msg("preparing new log file save name\n")
+        LOG_filename = self.state.LOG_file_save_location + "Sequence for mosaic_" + str(
+            self.state.mosaic_number) + "_" + self.state.timestamped_msg("")[:-1] + ".txt"
+        LOG_filename = LOG_filename[2:].replace(":", "_")
+        LOG_filename = "C:" + LOG_filename.replace(" ", "_")
+        file = open(LOG_filename, "w")
+        print("saving log file: ", LOG_filename)
+        file.write(self.state.process_log)
+        file.close()
+        print("file saved")
+        print("clearing process log for next print job")
+        self.state.process_log = ""
+        print("READY!")
 
     def error_server(self):
         msg = ""
@@ -338,6 +353,13 @@ class TilePrint():
                     # print("Error message ended")
                     if msg[:3] == "mf0":
                         self.state.process_log += self.state.timestamped_msg("paused because of empty cartridge\n")
+                        print(self.state.process_log.split("\n")[-2] + "\n")
+                        self.state.printpause = True
+                        self.button_pause.config(bg=active_bg_clr, fg=active_fg_clr)
+                        self.button_start.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+                        self.button_restart.config(bg=inactive_bg_clr, fg=inactive_fg_clr)
+                    if msg[:3] == "gf0":
+                        self.state.process_log += self.state.timestamped_msg("paused because of gripper crash\n")
                         print(self.state.process_log.split("\n")[-2] + "\n")
                         self.state.printpause = True
                         self.button_pause.config(bg=active_bg_clr, fg=active_fg_clr)
