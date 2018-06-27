@@ -18,7 +18,7 @@ button_width = 30
 class Settings():
     def __init__(self, parent, state):
         self.state = state
-        background_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\480x315_BLACK.jpg")
+        background_image = Image.open(self.state.path + "Images\\480x315_BLACK.jpg")
         self.background_image_tk = ImageTk.PhotoImage(background_image)
         self.info_settings = tk.Label(parent, image=self.background_image_tk, width=480, height=315)
         self.info_settings.place(x=130, y=135)

@@ -24,7 +24,7 @@ button_width = 30
 class Initialise():
     def __init__(self, parent, state):
         self.state = state
-        background_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\480x315_BLACK.jpg")
+        background_image = Image.open(self.state.path + "Images\\480x315_BLACK.jpg")
         self.background_image_tk = ImageTk.PhotoImage(background_image)
         self.info_initialise = tk.Label(parent, image=self.background_image_tk, width=480, height=315)
         self.info_initialise.place(x=130, y=135)
@@ -135,7 +135,7 @@ class Initialise():
             self.state.ttPort.write(RR_CommandGenerator.ttHome(axis="100"))
             unused_response = self.state.ttPort.readline()
             # moving?
-            self.state.tt_pal_moving()
+            self.state.tt_pal_moving_during_homing()
         else:
             self.state.process_log += self.state.timestamped_msg("TT z-axis already homed, no need to repeat\n")
             print(self.state.process_log.split("\n")[-2])
@@ -146,7 +146,7 @@ class Initialise():
             self.state.ttPort.write(RR_CommandGenerator.ttHome(axis="010"))
             unused_response = self.state.ttPort.readline()
             # moving?
-            self.state.tt_pal_moving()
+            self.state.tt_pal_moving_during_homing()
         else:
             self.state.process_log += self.state.timestamped_msg("TT y-axis already homed, no need to repeat\n")
             print(self.state.process_log.split("\n")[-2])
@@ -157,7 +157,7 @@ class Initialise():
             self.state.ttPort.write(RR_CommandGenerator.ttHome(axis="001"))
             unused_response = self.state.ttPort.readline()
             # moving?
-            self.state.tt_pal_moving()
+            self.state.tt_pal_moving_during_homing()
         else:
             self.state.process_log += self.state.timestamped_msg("TT x-axis already homed, no need to repeat\n")
             print(self.state.process_log.split("\n")[-2])
@@ -201,7 +201,7 @@ class Initialise():
             self.state.palPort.write(cmd)
             unused_response = self.state.palPort.readline()
             # moving?
-            self.state.tt_pal_moving()
+            self.state.tt_pal_moving_during_homing()
         else:
             self.state.process_log += self.state.timestamped_msg("PAL already homed, no need to repeat\n")
             print(self.state.process_log.split("\n")[-2])
@@ -216,6 +216,8 @@ class Initialise():
 
         self.rehome_PAL_button_bkclr = "green" if self.rehome_PAL_button_state else "red"
         self.button_rehome_PAL.config(bg=self.rehome_PAL_button_bkclr)
+
+        self.state.cntrlPort.flushOutput()
 
     def Mag2PAL_near(self):
         if (self.state.all_axes_homed and not self.state.printing) or (

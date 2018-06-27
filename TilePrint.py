@@ -28,7 +28,7 @@ button_width = 30
 class TilePrint():
     def __init__(self, parent, state):
         self.state = state
-        background_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\480x315_BLACK.jpg")
+        background_image = Image.open(self.state.path + "Images\\480x315_BLACK.jpg")
         self.background_image_tk = ImageTk.PhotoImage(background_image)
         self.info_tileprint = tk.Label(parent, image=self.background_image_tk, width=480, height=315)
         self.info_tileprint.place(x=130, y=135)
@@ -121,18 +121,18 @@ class TilePrint():
         #         self.image.append(new_row)
 
         # OPTION 2: directly create 2 list of lists for the mosaic
-        self.image = [[0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
-                      [1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
-                      [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
-                      [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2],
-                      [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
-                      [1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
-                      [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
-                      [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2],
-                      [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
-                      [1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
-                      [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
-                      [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]]
+        ##        self.image = [[0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
+        ##                      [1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
+        ##                      [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
+        ##                      [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2],
+        ##                      [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
+        ##                      [1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
+        ##                      [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
+        ##                      [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2],
+        ##                      [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
+        ##                      [1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0],
+        ##                      [2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
+        ##                      [3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]]
 
         ##        self.image = [[2, 2, 2, 2, 2],
         ##                      [2, 2, 2, 2, 2]]
@@ -156,10 +156,10 @@ class TilePrint():
         #          [0, 0, 0, 0, 0, 0, 0]]
 
         # OPTION 3: load a file created by PxlRT
-        # self.filename = filedialog.askopenfilename(initialdir="/", title="Select file",
-        #                                            filetypes=(("PxlRT files", "*.pkl"), ("all files", "*.*")))
-        # # filename = "C:\\Users\\Victor\\Desktop\list_save.pkl"
-        # self.image = pickle.load(open(self.filename, "rb"))
+        self.filename = filedialog.askopenfilename(initialdir="/", title="Select file",
+                                                   filetypes=(("PxlRT files", "*.pkl"), ("all files", "*.*")))
+        # filename = "C:\\Users\\Victor\\Desktop/LadyFace/new_list_0_0.pkl"
+        self.image = pickle.load(open(self.filename, "rb"))
         self.image_loaded = True
         self.button_loadfile.config(bg=active_bg_clr, fg=active_fg_clr)
 

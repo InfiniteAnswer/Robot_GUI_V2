@@ -26,7 +26,7 @@ root.withdraw()
 state = RuntimeState.RuntimeState()
 
 # Setup main window
-main_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\MAIN.jpg")
+main_image = Image.open(state.path + "Images\\MAIN.jpg")
 main_image_tk = ImageTk.PhotoImage(main_image)
 background = tk.Toplevel(root, background='black', width=640, height=480)
 background.title("PxlRT Studio")

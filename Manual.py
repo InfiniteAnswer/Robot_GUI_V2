@@ -18,7 +18,7 @@ button_width = 30
 class Manual():
     def __init__(self, parent, state):
         self.state = state
-        tt_manual_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\robot_persp2_dark.jpg")
+        tt_manual_image = Image.open(self.state.path + "Images\\robot_persp2_dark.jpg")
         self.tt_manual_image_tk = ImageTk.PhotoImage(tt_manual_image)
 
         self.background = parent

@@ -10,7 +10,7 @@ class RuntimeState():
         self.homeax3 = False
         self.homeax4 = False
         self.printing = False
-        self.printSpeed = 10    # This is the percentage of maxTTmovingSpeed
+        self.printSpeed = 10  # This is the percentage of maxTTmovingSpeed
         self.maxTTmovingSpeed = 150
         self.abort = False
         self.magazineinitialised = False
@@ -28,7 +28,11 @@ class RuntimeState():
 
         self.POLLING_DELAY = 0.1  # time in SECONDS between repeated requests to see if a robot is moving
         self.mosaic_number = 0
-        self.LOG_file_save_location = "C:/Users/Finlay/Documents/iai_log_files/"
+
+        # self.path = "C:\\Users\\Finlay\\Documents\\"
+        self.path = "C:\\Users\\v_sam\\desktop\\"
+
+        self.LOG_file_save_location = self.path + "iai_log_files/"
 
         self.param_robo = {"tt_port": "COM4",
                            "pal_port": "COM3",
@@ -43,7 +47,7 @@ class RuntimeState():
                            "gripper_close_wait": 0.4,
                            "gripper_up": 25,
                            "gripper_down_palette": 40.25,
-                           "gripper_down_table": 74, # was 73.5, changed to 74
+                           "gripper_down_table": 74,  # was 73.5, changed to 74
                            "gripper_safety_height": 10,
                            "moving_timeout": 90}
 
@@ -97,10 +101,7 @@ class RuntimeState():
         print(self.process_log.split("\n")[-2])
         self.ttPort.write(RR_CommandGenerator.ttServo(axis="100", on=1))
         unused_response = self.ttPort.readline()
-        time.sleep(1)   # DELAY of 1 SECOND to ensure the servos are active before proceeding
-
-
-
+        time.sleep(1)  # DELAY of 1 SECOND to ensure the servos are active before proceeding
 
     def tt_moving_query(self):
         # ask tt if moving and save response
@@ -123,7 +124,6 @@ class RuntimeState():
         tt_3 = (eval(response_tt_3) & 0b1) == 1
         tt = tt_1 or tt_2 or tt_3
         return (tt)
-
 
     def pal_moving_query(self):
         # ask pal if moving and save response
@@ -158,7 +158,6 @@ class RuntimeState():
 
         # safety delay of 3s
         time.sleep(3)
-
 
     def tt_moving(self):
         global process_log
@@ -202,9 +201,22 @@ class RuntimeState():
                 break
             time.sleep(self.POLLING_DELAY)
 
+    def tt_pal_moving_during_homing(self):
+        global process_log
+        timeout = time.time() + self.param_robo["moving_timeout"]
+        while ((self.tt_moving_query() or self.pal_moving_query())):
+            if time.time() > timeout:
+                process_log += "WARNING! TT or PAL timed out. Unable to reach set-point after " + \
+                               str(self.param_robo["moving_timeout"]) + " seconds\n"
+                print(process_log.split("\n")[-2])
+                break
+            time.sleep(self.POLLING_DELAY)
+
     def pixel2table(self, x_n, y_n):
-        table_x = self.param_tiles["tt_origin_x"] + x_n * (self.param_tiles["tile_width"] + self.param_tiles["inter_tile_hgap"])
-        table_y = self.param_tiles["tt_origin_y"] + y_n * (self.param_tiles["tile_height"] + self.param_tiles["inter_tile_vgap"])
+        table_x = self.param_tiles["tt_origin_x"] + x_n * (
+                    self.param_tiles["tile_width"] + self.param_tiles["inter_tile_hgap"])
+        table_y = self.param_tiles["tt_origin_y"] + y_n * (
+                    self.param_tiles["tile_height"] + self.param_tiles["inter_tile_vgap"])
         return (table_x, table_y)
 
     def colour2palette(self, c_n):
@@ -214,7 +226,6 @@ class RuntimeState():
     def timestamped_msg(self, msg):
         string = str(time.asctime(time.localtime(time.time()))) + ": " + msg
         return (string)
-
 
     def all_axes_homed(self):
         answer = self.homeax1 and self.homeax2 and self.homeax3 and self.homeax4

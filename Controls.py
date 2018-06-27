@@ -30,25 +30,25 @@ class Controls():
         self.flag_printpause = False
 
         # Create blank grey default info panel
-        background_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\480x315_BLACK.jpg")
+        background_image = Image.open(self.state.path + "Images\\480x315_BLACK.jpg")
         self.background_image_tk = ImageTk.PhotoImage(background_image)
         self.info_controls = tk.Label(background, image=self.background_image_tk, width=480, height=315)
         self.info_controls.place(x=130, y=135)
 
         # Define images for 4 main buttons, header banner, and overall system outline
-        settings_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\SETTINGS_BUTTON.jpg")
+        settings_image = Image.open(self.state.path + "Images\\SETTINGS_BUTTON.jpg")
         self.settings_image_tk = ImageTk.PhotoImage(settings_image)
 
-        manual_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\MANUAL_BUTTON.jpg")
+        manual_image = Image.open(self.state.path + "Images\\MANUAL_BUTTON.jpg")
         self.manual_image_tk = ImageTk.PhotoImage(manual_image)
 
-        print_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\PRINT_BUTTON.jpg")
+        print_image = Image.open(self.state.path + "Images\\PRINT_BUTTON.jpg")
         self.print_image_tk = ImageTk.PhotoImage(print_image)
 
-        initialise_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\INITIALISE_BUTTON.jpg")
+        initialise_image = Image.open(self.state.path + "Images\\INITIALISE_BUTTON.jpg")
         self.initialise_image_tk = ImageTk.PhotoImage(initialise_image)
 
-        PxlRT_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\BANNER.jpg")
+        PxlRT_image = Image.open(self.state.path + "Images\\BANNER.jpg")
         self.PxlRT_image_tk = ImageTk.PhotoImage(PxlRT_image)
 
         # tt_manual_image = Image.open("C:\\Users\\Finlay\\Documents\\Images\\tt_manual.jpg")
