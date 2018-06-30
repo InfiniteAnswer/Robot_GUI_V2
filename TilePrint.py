@@ -9,6 +9,7 @@ import RR_CommandGenerator
 import time
 import threading
 from threading import Thread
+import os
 
 background_clr = "grey10"
 foreground_clr = "white"
@@ -95,9 +96,25 @@ class TilePrint():
 
         self.print_speed = tk.Scale(self.info_tileprint, from_=10, to=100, resolution=10, orient=tk.HORIZONTAL,
                                     label="% of Max Speed",
-                                    bd=0, highlightthickness=0, fg="yellow", bg="grey10", length=400)
+                                    bd=0, highlightthickness=0, fg="yellow", bg="grey10", length=190)
         self.print_speed.bind("<ButtonRelease-1>", self.updatePrintSpeed_callback)
         self.print_speed.place(x=40, y=220)
+
+        self.tile_stats = tk.LabelFrame(self.info_tileprint, text="Stats", width=200, height=80)
+        self.individual_tile_stats = []
+        for i in range(8):
+            self.individual_tile_stats.append(tk.Label(self.tile_stats,
+                                                       text="Tile " + str(i) + ": " +
+                                                            str(self.state.tiles_printed[i]) + " / " +
+                                                            str(self.state.tile_totals[i])))
+            if i<4:
+                self.individual_tile_stats[i].place(x=0, y=i*15)
+            else:
+                self.individual_tile_stats[i].place(x=100, y=(i-4)*15)
+
+        self.tile_stats.place(x=240, y=220)
+
+        # self.update_tile_stats()
 
         self.filename = ""
         self.image = []
@@ -162,6 +179,45 @@ class TilePrint():
         self.image = pickle.load(open(self.filename, "rb"))
         self.image_loaded = True
         self.button_loadfile.config(bg=active_bg_clr, fg=active_fg_clr)
+        self.button_loadfile.config(text=self.getfilename())
+        self.set_tile_totals()
+        self.update_tile_stats()
+
+    def getfilename(self):
+        fullname = os.path.basename(self.filename)
+        name_without_extension = os.path.splitext(fullname)[0]
+        if len(name_without_extension)>15:
+            name_without_extension = name_without_extension[0:9] + "..." + name_without_extension[-6:-1]
+        return name_without_extension
+
+    def update_tile_stats(self):
+        for i in range(8):
+            self.individual_tile_stats[i].config(text="Tile " + str(i) + ": " +
+                                                        str(self.state.tiles_printed[i]) + " / " +
+                                                        str(self.state.tile_totals[i]))
+
+        if self.state.printing:
+            current_time = time.time()
+        else:
+            current_time = self.state.start_time
+        time_passed_mins = time.localtime(current_time - self.state.start_time)[4]
+        time_passed_secs = time.localtime(current_time - self.state.start_time)[5]
+        frame_title = "Printed " + str(sum(self.state.tiles_printed)) + "/" + str(
+            self.state.tile_grand_total) + "  " + str(
+            int(sum(self.state.tiles_printed) / self.state.tile_grand_total * 100)) + "%" + "  " + str(
+            time_passed_mins) + "mins " + str(time_passed_secs) + "secs"
+        self.tile_stats.config(text=frame_title)
+
+    def set_tile_totals(self):
+        for i in range(8):
+            counter = 0
+            for row in self.image:
+                for col in row:
+                    if col == i:
+                        counter += 1
+            self.state.tile_totals[i] = counter
+            self.state.tiles_printed[i] = 0
+            self.state.tile_grand_total = sum(self.state.tile_totals)
 
     def updatePrintSpeed_callback(self, e):
         self.state.printSpeed = self.print_speed.get()
@@ -175,6 +231,7 @@ class TilePrint():
             time.sleep(2)  # safety delay before interpreting keypress as request to pause
 
             self.state.printing = True
+            self.state.start_time=time.time()
             th = Thread(target=self.start_sequence)
             th.start()
             ##            th_error_server = Thread(target=self.error_server)
@@ -300,6 +357,10 @@ class TilePrint():
                 # open gripper
                 if self.execute_next_command():
                     self.open_gripper()
+
+                # update tile stats
+                self.state.tiles_printed[self.image[row_i][col_i]] += 1
+                self.update_tile_stats()
 
                 # move gripper up
                 if self.execute_next_command():

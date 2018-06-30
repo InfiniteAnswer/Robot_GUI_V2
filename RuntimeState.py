@@ -25,6 +25,10 @@ class RuntimeState():
         self.last_commanded_ax4 = 2
         self.recovery_initiated = False
         self.palette_motion_during_printpause = False
+        self.tile_totals = [0, 0, 0, 0, 0, 0, 0, 0]
+        self.tiles_printed = [0, 0, 0, 0, 0, 0, 0, 0]
+        self.start_time = time.time()
+        self.tile_grand_total = sum(self.tile_totals)
 
         self.POLLING_DELAY = 0.1  # time in SECONDS between repeated requests to see if a robot is moving
         self.mosaic_number = 0
